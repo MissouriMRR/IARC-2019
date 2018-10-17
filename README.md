@@ -23,3 +23,4 @@ git checkout -b "branch_name"
 5. Once it has been reviewed by other members of the team, it can be accepted to the `develop` branch and the cycle continues...
 
 > More info on the process [here](https://nvie.com/posts/a-successful-git-branching-model/) and [here](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
+
