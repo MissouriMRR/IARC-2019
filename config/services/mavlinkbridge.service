@@ -1,0 +1,15 @@
+[Unit]
+Description=MavLink WiFi Bridge
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mavproxy.py --master=/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00 --out=udpin:0.0.0.0:14550 --daemon
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+
