@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<desiredgraphs>
+  <graph title="Multivariable test" xlabel="Seconds" ylabel="x">
+    <metrics color="yellow" label="Pitch" x_stream="pitch"/>
+    <metrics color="red" func="log(x)" label="Roll" x_stream="roll"/>
+    <metrics color="blue" func="x + (2*y)" label="P + R" x_stream="roll" y_stream="pitch"/>
+  </graph>
+  <graph legend="no" title="Test 1" xlabel="Seconds" ylabel="Pitch">
+    <metrics label="Main" x_stream="pitch"/>
+    <metrics label="Target" x_stream="target_pitch_velocity"/>
+  </graph>
+  <graph title="Test 2" xlabel="Seconds" ylabel="Roll">
+    <metrics color="blue" label="Main" x_stream="pitch"/>
+    <metrics label="Target" x_stream="target_roll_velocity"/>
+    <metrics func="x/3" label="Testeroni" x_stream="pitch"/>
+  </graph>
+  <graph output="text">
+    <metrics label="voltage" x_stream="voltage"/>
+    <metrics label="TARGET" x_stream="voltage"/>
+    <metrics label="Test 1" x_stream="voltage"/>
+    <metrics func="x is .3" label="Test 2" x_stream="voltage"/>
+  </graph>
+</desiredgraphs>

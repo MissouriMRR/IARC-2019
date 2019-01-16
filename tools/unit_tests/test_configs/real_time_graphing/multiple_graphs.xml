@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<desiredgraphs>
+  <graph title="Multivariable test" xlabel="Seconds" ylabel="x" >
+    <metric label="Pitch" x_stream="pitch" color="yellow"/>
+    <metric label="Roll" x_stream="roll" func="x" color="red"/>
+    <metric label="P + R" x_stream="roll" y_stream="pitch" func="x + (2*y)"/>
+  </graph>
+  <graph title="Multivariable test 2" xlabel="x" ylabel="y" >
+    <metric label="Pitch" x_stream="pitch"/>
+    <metric label="Roll" x_stream="roll" func="x"/>
+    <metric label="P + R" x_stream="roll" y_stream="pitch" func="x + (2*y)"/>
+  </graph>
+</desiredgraphs>
