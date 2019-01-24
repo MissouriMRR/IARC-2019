@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<desiredgraphs>
+  <graph title="Graph0">
+    <metric func="x" label="Pitch" x_stream="pitch"/>
+    <metric func="x" label="Roll" x_stream="roll"/>
+    <metric func="x" label="Yaw" x_stream="yaw"/>
+    <metric func="x" label="Target_yaw" x_stream="target_yaw"/>
+    <metric func="x" label="Velocity_y" x_stream="velocity_y"/>
+    <metric func="x" label="invalid_test" x_stream="invalid"/>
+  </graph>
+</desiredgraphs>

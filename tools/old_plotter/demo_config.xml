@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<desiredgraphs>
+  <graph lower_time="0" title="Orientation" upper_time="10">
+    <metric func="x" label="Pitch" x_stream="pitch"/>
+    <metric func="x" label="Roll" x_stream="roll"/>
+    <metric func="x" label="Yaw" x_stream="yaw"/>
+  </graph>
+  <graph lower_time="10" title="Custom Metric" upper_time="20">
+    <metric func="sin(x) * 16 - .5" label="Sick test" x_stream="pitch"/>
+  </graph>
+</desiredgraphs>
