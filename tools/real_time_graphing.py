@@ -3,6 +3,7 @@ import threading
 from multiprocessing import Queue
 from time import sleep, time
 import os
+import enum
 
 import numpy as np
 from matplotlib import animation as animation
@@ -152,26 +153,31 @@ class RealTimeGraph:
         ncols = int(self.graph_count / nrows) + (self.graph_count % nrows)
 
         def unique_color_generator(colors_taken):
-            colors = ['blue', 'orange', 'red', 'green', 'yellow', 'black']
+            class Colors(enum.Enum):
+                BLUE = 'blue'
+                ORANGE = 'orange'
+                RED = 'red'
+                GREEN = 'green'
+                YELLOW = 'yellow'
+                BLACK = 'black'
 
             seen = set(colors_taken)
 
-            for elem in colors:
+            for elem in Colors:
+                elem = elem.value
                 if elem not in seen:
                     yield elem
                     seen.add(elem)
 
         for graph in output:
             if graph['output'] == 'text':
-                i = 0
-                for metric in graph['metrics']:
+                for i, metric in enumerate(graph['metrics']):
                     # (Coords are percent of width/height) This is creating a text object w/ a location.
-                    text = ax.text(i * (1 / len(graph['metrics'])) + .01, .01, 'matplotlib', transform=plt.gcf().transFigure)
+                    text = plt.text((float(i) / float(len(graph['metrics']))) + .01, .01, 'matplotlib', transform=plt.gcf().transFigure)
 
                     self.tracked_data.append(Metric(output=text, label=metric['label'], func=metric['func'],
                                                     x_stream=metric['x_stream'], y_stream=metric['y_stream'],
                                                     z_stream=metric['z_stream']))
-                    i += 1
 
             else:
                 color_gen = unique_color_generator([metric['color'] for metric in graph['metrics']])
@@ -187,7 +193,10 @@ class RealTimeGraph:
                 ax.set_ylabel(graph['ylabel'])
 
                 for metric in graph['metrics']:
-                    color = metric['color'] if metric['color'] else next(color_gen)
+                    try:
+                        color = metric['color'] if metric['color'] else next(color_gen)
+                    except StopIteration:
+                        logging.error("Out of metric colors.")
 
                     m_line, = ax.plot([], [], color=color, label=metric['label'])
 
@@ -248,7 +257,6 @@ class RealTimeGraph:
                 try:
                     if self.times[-1] > self.times[-2] + RealTimeGraph.DATA_FREQ_WARNING:
                         logging.warning("RTG: Data quality: Sucks")
-                        pass
                 except IndexError:
                     pass
 

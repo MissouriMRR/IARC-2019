@@ -20,7 +20,6 @@ def get_demo_data():
         'roll_rc_output', 'target_roll_velocity', 'yaw_controller_output', 'yaw_rc_output', 'target_yaw', 'color_image',
         'depth_image'
     ]
-    
     imaginary_data = {key: gen[i, 0] for i, key in enumerate(keys)}
 
     return imaginary_data

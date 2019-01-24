@@ -1,3 +1,5 @@
 matplotlib
 numpy
 pandas
+enum34
+defusedxml

@@ -7,6 +7,10 @@ import threading
 from time import sleep
 
 
+_command_whitelist = ['python']
+_filename_whitelist = ['rtg_cache.py']
+
+
 class IPC:
     """
     Creates subprocess in python 2.7 that it can send and receive data from.
@@ -22,7 +26,7 @@ class IPC:
         The thread stop to be used by shell reader, pass in own thread stop or allow it to create its own.
     """
 
-    python_command = 'python'  # Command to start python 2.7
+    command = 'python'  # Command to start python 2.7
 
     def __init__(self, reader=True, thread_stop=threading.Event(), target_path="rtg_cache.py"):
         self.thread_stop = thread_stop
@@ -33,7 +37,7 @@ class IPC:
 
         if filename and filename[-1] is not os.path.sep:
             filename += '/'
-        
+
         filename += target_path
 
         # Start subprocess
@@ -41,20 +45,23 @@ class IPC:
         try:
             # Attempt start
 
-            command = shlex.split('{} {}'.format(IPC.python_command, filename), posix=0)
+            if IPC.command in _command_whitelist and target_path in _filename_whitelist:
+                command_w_args = shlex.split('{} {}'.format(IPC.command, filename), posix=0)
+                command_w_args = shlex.split('{} {}'.format(IPC.command, filename), posix=0)
 
-            if reader:
-                self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE,
-                                                   stdout=subprocess.PIPE)
+                if reader:
+                    self.subprocess = subprocess.Popen(command_w_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                else:
+                    self.subprocess = subprocess.Popen(command_w_args, stdin=subprocess.PIPE)
             else:
-                self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE)
+                raise ValueError("Command '{}' not in whitelist!".format(IPC.command))
 
             sleep(.1)  # Give time to start / fail to start
 
             # See if started
 
             if self.subprocess.poll():
-                output, error_output = self.subprocess.communicate()
+                _, error_output = self.subprocess.communicate()
                 logging.warning("IPC: Poll: {}".format(error_output))
 
         except Exception as e:
@@ -95,10 +102,9 @@ class IPC:
 
         logging.warning("IPC: Quitting.")
         try:
-          self.subprocess.terminate()
+            self.subprocess.terminate()
         except OSError:
-            pass
-          
+            logging.warning("Failed to terminate subprocess.")
         self.thread_stop.set()
 
         if self.reader_thread:

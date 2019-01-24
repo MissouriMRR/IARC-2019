@@ -2,7 +2,6 @@
 The data splitter is a tool to easily manage where output data goes. 
 Can easily toggle what tools to send data without having to change any code, just one parameter.
 
-
 ## Configuration
 
 Parameters
@@ -21,7 +20,6 @@ Parameters
 __DataSplitter.tools_active__ Returns the objects of all active tools.
 __DataSplitter.send(Data)__ Send data to all active tools. 
 __DataSplitter.exit()__ Safely exit all tools.
-
 
 ## Troubleshooting
 If you have issues or suggestions, message Cole Dieckhaus on slack or email @ csdhv9@mst.edu.

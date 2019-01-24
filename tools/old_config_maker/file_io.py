@@ -1,10 +1,20 @@
 import xml.etree.ElementTree as ET
-from xml.dom.minidom import parseString
+from defusedxml.ElementTree import parse
+from defusedxml.minidom import parseString
 
 
 def xml_to_string(xml_tag):
     """
-    Makes xml objects into string formatted in a readable way
+    Makes xml objects into string formatted in a readable way.
+
+    Parameters
+    ----------
+    xml_tag: xml.etree.ElementTree
+        Raw xml element tree to be redone.
+
+    Returns
+    -------
+    Pretty xml tree.
     """
     return parseString(ET.tostring(xml_tag)).toprettyxml(indent="  ")
 
@@ -25,11 +35,9 @@ def parse_config(filename):
         and metrics. Metrics is a list of dictionaries including label, color, func, x_stream, y_stream and z_stream.
     """
 
-    #
-    # Decode graph
     output = []
 
-    root = ET.parse(filename).getroot()
+    root = parse(filename).getroot()
 
     for graph in root.findall('graph'):
         output.append({
@@ -40,15 +48,11 @@ def parse_config(filename):
             'xlabel': graph.get('xlabel'),
             'ylabel': graph.get('ylabel'),
 
-            'lower_time': graph.get('lower_time'),
-            'upper_time': graph.get('upper_time'),
-
-            'metric': []
+            'metrics': []
         })
 
         for metric in graph.findall('metric'):
-            output[-1]['metric'].append({
-
+            output[-1]['metrics'].append({
                 'label': metric.get('label'),
 
                 'color': metric.get('color'),
@@ -77,11 +81,13 @@ def possible_metrics(filename):
     List of possible metrics. List of dictionaries -> {label: [(x_stream, y_stream, z_stream), func]}
     """
 
+    metrics = {}
+
     raw_data = parse_config(filename)
 
-    metrics = {
-        metric['label']: [(metric['x_stream'], metric['y_stream'], metric['z_stream']), metric['func']]
-        for graph in raw_data for metric in graph['metric']}
+    for graph in raw_data:
+        for metric in graph['metrics']:
+            metrics.update({metric['label']: [(metric['x_stream'], metric['y_stream'], metric['z_stream']), metric['func']]})
 
     return metrics
 
@@ -103,24 +109,11 @@ def write_config(filename, data):
     desiredgraphs = ET.Element('desiredgraphs')
 
     for graph in data:
-        curr_graph = ET.SubElement(desiredgraphs, 'graph', {key: value for key, value in graph.items() if type(value) is not list and value})
-        for key, lst in [(key, value) for key, value in graph.items() if type(value) is list and value]:
+        curr_graph = ET.SubElement(desiredgraphs, 'graph', {key: value for key, value in graph.items() if not isinstance(value, list) and value})
+        for key, lst in [(key, value) for key, value in graph.items() if isinstance(value, list) and value]:
             for item in lst:
                 ET.SubElement(curr_graph, key, {key: value for key, value in item.items() if value})
 
     # Write
     with open(filename, 'w') as g:
         g.write(xml_to_string(desiredgraphs))
-
-
-if __name__ == '__main__':
-    def test_parse_config():
-        print(parse_config('test_config1.xml'))
-
-    def test_write_config():
-        write_config('test_config2.xml', parse_config('test_config1.xml'))
-
-    def test_possible_metrics():
-        print(possible_metrics('test_config1.xml'))
-
-    test_possible_metrics()

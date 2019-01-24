@@ -168,7 +168,7 @@ class TabManager:
         data = self.get_graph_data(base_tab_id)
 
         if dest_tab_id:
-            relevant_tabs = dest_tab_id if type(dest_tab_id) is list else [dest_tab_id]
+            relevant_tabs = dest_tab_id if isinstance(dest_tab_id, list) else [dest_tab_id]
         else:
             relevant_tabs = [i for i in range(len(self._tabs)) if i is not base_tab_id]
 

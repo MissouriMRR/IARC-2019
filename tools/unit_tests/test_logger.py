@@ -1,4 +1,4 @@
-import import_parent_directory
+import parent_directory
 
 import unittest
 
@@ -38,7 +38,7 @@ class LoggerTest(unittest.TestCase):
 
         # Make sure altitude didn't get logged
         with self.assertRaises(KeyError):
-            x = data['altitude']
+            print(data['altitude'])
 
 
 if __name__ == '__main__':

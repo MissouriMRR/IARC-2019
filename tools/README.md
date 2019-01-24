@@ -14,7 +14,6 @@ Run in 2.7, __unit test automatically runs__ with script being run.
 
 More details in documentation/splitter/README.md
 
-
 ## Logger
 Logs data as it comes in from the drone in real time.
 
@@ -25,7 +24,6 @@ Created and managed by *data_splitter* and creates logs in generated_logs/.
 Run in 2.7 or 3.6, __unit test automatically runs__ with script being run.
 
 More details in documentation/log/README.md
-
 
 ## Inter-process Communication
 Creates and interacts with a subprocess. Currently used to keep the real_time_graphing process
@@ -40,7 +38,6 @@ Run in 2.7, __unit test automatically runs__ with script being run.
 
 More details in documentation/ipc/README.md
 
-
 ## RTG Cache
 Caches data for real time grapher. Meant to be used with Inter-process Communication.
 
@@ -52,7 +49,6 @@ thread without interfering with other code.
 Created and managed by *inter-process communication*, creates and manages *real time grapher*.
 
 Run in 2.7 or 3.6, __unit test can be run from main if uncommented__.
-
 
 ## Real Time Grapher
 Graphs data as it comes in from drone in real time. Run with the inter-process communication.
@@ -67,26 +63,13 @@ Run in 2.7 or 3.6, __unit test automatically runs__ with script being run.
 
 More details in real_time_graph/README.md
 
-
-# To be phased out
-## Config Maker
+## Config Maker (To be phased out)
 Creates config files for RTG and Log Grapher.
 
-__Meant to be run independently.__
+Meant to be run independently.
 
 Makes use of *tab_manager*, which makes use of *graph_node*.
 
 Run old_config_maker/gui_main in 3.6, __config maker automatically runs__ with script.
 
 More details in old_config_maker/README.md
-
-
-## Plotter / Log Grapher
-Graph data from generated log files. Requires a config file and csv data file.
-
-__Meant to be run independently.__
-
-Run in 3.6, __plotter automatically runs__ with script.
-
-More details in old_plotter/README.md
-

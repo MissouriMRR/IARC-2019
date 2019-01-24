@@ -98,10 +98,10 @@ class GraphNode:
         return output
 
     def add_item(self, name, loc, obj):
-        if type(obj) is dict:
+        if isinstance(obj, dict):
             for item in obj.values():
                 item.configure(background="#66AA33")
-        elif not type(obj) is Entry:
+        elif not isinstance(obj, Entry):
             obj.configure(background="#66AA33")
 
         self.items[name] = obj
@@ -171,7 +171,7 @@ class GraphNode:
         """
 
         for value in self.items.values():
-            if type(value) is dict:
+            if isinstance(value, dict):
                 for item in value.values():
                     item.destroy()
             else:
@@ -197,7 +197,7 @@ class GraphNode:
             if key in self.item_locations.keys():
                 grid_values = self.item_locations[key]
 
-                if type(value) is dict:
+                if isinstance(value, dict):
                     for i, key in enumerate(value.keys()):
                         value[key].grid(sticky="W", column=i % GraphNode.checkbox_width,
                                         row=rolling_offset + grid_values + int(i / GraphNode.checkbox_width))
@@ -236,7 +236,7 @@ class GraphNode:
     # TODO - NOT FOR BASE WORKING
     def reset(self, to_reset=None):
         # TODO - Add default item settings
-        if type(to_reset) is not list: to_reset = [to_reset]
+        if not isinstance(to_reset,list): to_reset = [to_reset]
         if not to_reset: to_reset = [key for key in self.items.keys()]
 
         for item in to_reset:

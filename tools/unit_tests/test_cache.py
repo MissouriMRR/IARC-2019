@@ -1,4 +1,4 @@
-import import_parent_directory
+import parent_directory
 
 from demo_data_gen import get_demo_data
 

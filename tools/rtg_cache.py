@@ -52,9 +52,9 @@ class RTGCache:
         try:
             received = sys.stdin.readline()  # No timeout because this should be run in subprocess
 
-            if type(received) is str:
+            if isinstance(received, str):
                 data = literal_eval(received)
-            elif type(received) is dict:
+            elif isinstance(received, dict):
                 data = received
             else:
                 logging.warning("Cache: Input type unexpected! Type: {}, Raw: {}".format(type(received), received))

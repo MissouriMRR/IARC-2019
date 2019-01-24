@@ -1,5 +1,4 @@
 import logging
-from time import sleep, time
 
 from interprocess_communication import IPC
 from logger import Logger
@@ -20,7 +19,7 @@ class DataSplitter:
         Whether to use the real time grapher or not.
     """
 
-    def __init__(self, logger_desired_headers=[], use_rtg=True):
+    def __init__(self, logger_desired_headers=None, use_rtg=True):
 
         # Enable or disable each tool based on parameter choice
 

@@ -1,4 +1,4 @@
-import import_parent_directory
+import parent_directory
 
 import os
 import unittest
@@ -34,6 +34,8 @@ class FileIOTest(unittest.TestCase):
         # Parsing must work for this test
 
         self.assertEqual(file_io.parse_config(FileIOTest.file2), FileIOTest.expected_parse)
+
+        os.remove(FileIOTest.file2)
 
     def test_possible_metrics(self):
         """

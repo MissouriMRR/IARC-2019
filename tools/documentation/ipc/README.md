@@ -33,6 +33,5 @@ __IPC.alive__ (bool) to see created process is still running.
 
 __IPC.quit()__ to safely close the IPC.
 
-
 ## Troubleshooting
 If you have issues or suggestions, message Cole Dieckhaus on slack or email @ csdhv9@mst.edu.
