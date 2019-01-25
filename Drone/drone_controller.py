@@ -49,7 +49,8 @@ class DroneController(DroneControllerBase):
 
         try:
             # Connect to low-level controller
-            self.drone.connect(c.DRONES[c.Drones.LEONARDO_SIM])
+            self.drone.connect(c.DRONES[c.Drones.LEONARDO_SIM],
+                c.SIMULATION_MULTIPLIER)
 
             # Arm the drone for flight
             self.drone.arm()

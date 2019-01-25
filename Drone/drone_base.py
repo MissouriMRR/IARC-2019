@@ -22,6 +22,9 @@ class DroneBase(object):
         Interface for controlling drone.
     _logger
         Write messages to command line.
+    _simulation_multiplier : float
+        Value by which the default speed is multiplied in order to offset
+        simulation the real-time factor.
     devices : list of Device
         Interface to the drone's devices, such as camera
 
@@ -34,10 +37,11 @@ class DroneBase(object):
         self._vehicle = None
         self._connected = False
         self._logger = logging.getLogger(__name__)
+        self._simulation_multiplier = None
 
         self.devices = []
 
-    def connect(self, name):
+    def connect(self, name, simulation_multiplier=1):
         """Connect drone to ardupilot.
 
         Upon a successful connection, the drone is now suitable to be armed.
@@ -46,6 +50,9 @@ class DroneBase(object):
         ----------
         name : str
             The connection string that should be used to connect to drone.
+        simulation_multiplier : float
+            Value by which the default speed is multiplied in order to offset
+            simulation the real-time factor.
 
         Returns
         -------
@@ -56,7 +63,7 @@ class DroneBase(object):
         -----
         See http://python.dronekit.io/automodule.html#dronekit.connect
         """
-
+        self._simulation_multiplier = simulation_multiplier
 
         self._vehicle = dronekit.connect(
             name, wait_ready=True,
@@ -293,7 +300,7 @@ class DroneBase(object):
 
         # Calculate duration to send velocity command based on distance and
         # velocity
-        duration = distance / speed
+        duration = (distance / speed) * self._simulation_multiplier
 
         # Multiply unit vector in direction by the velocity
         vector = tuple(speed * n for n in direction.value)
