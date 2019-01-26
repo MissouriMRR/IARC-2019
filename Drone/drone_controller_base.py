@@ -24,7 +24,7 @@ class DroneControllerBase():
 
     def __init__(self):
         self._id = None
-        self._instruction_queue = []
+        self._instruction_queue = None
         self._current_instruction = None
         self._task = None
 

@@ -8,7 +8,6 @@ class Drones(Enum):
     LEONARDO_SIM = "Leonardo_Sim"
     LEONARDO = "Leonardo"
 
-
 DRONES = {
         Drones.LEONARDO_SIM : 'tcp:127.0.0.1:5762',
         Drones.LEONARDO: '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
@@ -29,6 +28,19 @@ MAXIMUM_ALLOWED_ALTITUDE = 4.0
 RANGEFINDER_MIN = 0.29
 RANGEFINDER_EPSILON = 0.03
 DEFAULT_ARM_TIMEOUT = 60
+
+
+class Priorities(Enum):
+    """Constants for differentiating the priority of items.
+
+    Notes
+    -----
+    Values are based on heapq, with is a min-heap.
+    """
+    LOW = 3
+    MEDIUM = 2
+    HIGH = 1
+
 
 # DroneKit Vehicle Modes
 class Modes(Enum)  :

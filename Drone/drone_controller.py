@@ -15,6 +15,7 @@ from ..Utilities import constants as c
 from ..Utilities import drone_exceptions
 from ..Utilities.helper import current_thread_name
 from ..Utilities.lock import SharedLock
+from ..Utilities.priority_queue import PriorityQueue
 
 class DroneController(DroneControllerBase):
     """Manages the control logic of a drone.
@@ -28,18 +29,20 @@ class DroneController(DroneControllerBase):
 
         self._logger = logging.getLogger(__name__)
         self._debug = True
-
         self.drone = drone
+        self._instruction_queue = PriorityQueue()
 
-        coloredlogs.install(level='DEBUG')
+        coloredlogs.install(level=logging.INFO)
 
         # The following two lines are purely for testing purposes. Instructions
         # will be pushed onto the heap as a result of the swarm controller
         # sending instructions or inter-drone communication.
-        heapq.heappush(
-            self._instruction_queue, (0, MovementInstruction((5, 5, 0))))
-        heapq.heappush(
-            self._instruction_queue, (0, MovementInstruction((-5, -5, 0))))
+        sample_data1 = (5, 5, 0)
+        sample_data2 = (-5, -5, 0)
+        self._instruction_queue.push(
+            c.Priorities.MEDIUM, MovementInstruction(sample_data1))
+        self._instruction_queue.push(
+            c.Priorities.MEDIUM, MovementInstruction(sample_data2))
 
     def run_loop(self):
         SharedLock.get_lock().acquire()
@@ -104,7 +107,7 @@ class DroneController(DroneControllerBase):
 
         if isinstance(self._task, HoverTask) or self._task is None:
             # Process remaining instructions
-            if len(self._instruction_queue):
+            if not self._instruction_queue.empty():
                 # Stop hovering, if we were doing so
                 if isinstance(self._task, HoverTask):
                     stop_hover_event = self._task.exit_task()
@@ -117,9 +120,8 @@ class DroneController(DroneControllerBase):
                     self._task = HoverTask(self.drone)
 
     def _read_next_instruction(self):
-        if len(self._instruction_queue):
-            self._current_instruction = heapq.heappop(
-                self._instruction_queue)[1]
+        self._current_instruction = self._instruction_queue.pop()
+        if self._current_instruction is not None:
             self._task = self._current_instruction.get_task(self.drone)
 
     def do_safety_checks(self):
