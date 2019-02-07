@@ -48,6 +48,13 @@ class PriorityQueue():
         else:
             return None
 
+    def top(self):
+        if len(self):
+        # Index 0 is priority, index 1 is the item.
+            return self._queue[0][1]
+        else:
+            return None
+
     def empty(self):
         """Check if the priority queue is empty.
 

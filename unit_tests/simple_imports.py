@@ -7,6 +7,6 @@ def import_parent():
 
 
 def import_distributor():
-    directory = parent_dir + r"\tools\data_distributor"
+    directory = os.path.join(parent_dir, 'tools', 'data_distributor')
 
     sys.path.insert(0, directory)
