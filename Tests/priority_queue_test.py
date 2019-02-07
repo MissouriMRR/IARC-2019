@@ -16,12 +16,13 @@ class TestPriorityQueue(unittest.TestCase):
     def test_proper_order(self):
         """Test that a mixed-bag of priorities comes out in the right order."""
         queue = PriorityQueue()
-        items = [1, 2, 3]
-        priorities = [Priorities.LOW, Priorities.MEDIUM, Priorities.HIGH]
+        items = [1, 2, 3, 4]
+        priorities = [Priorities.LOW, Priorities.LOW, Priorities.MEDIUM,
+            Priorities.HIGH]
         for item, priority in zip(items, priorities):
             queue.push(priority, item)
 
-        items.reverse()
+        items = [4, 3, 1, 2]
         for item in items:
             self.assertEqual(item, queue.pop(), "Not returning items with \
             higher priority first.")
