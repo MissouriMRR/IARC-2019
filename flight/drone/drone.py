@@ -1,7 +1,8 @@
-from dronekit import Vehicle
+from dronekit import Vehicle, VehicleMode
 import logging
 from math import radians
 from pymavlink import mavutil
+import time
 
 from optical_flow_attribute import OpticalFlow
 from .. import constants as c
@@ -112,6 +113,33 @@ class Drone(Vehicle):
         """
         msg = self._make_velocity_message(north, east, down)
         self.send_mavlink(msg)
+
+    def arm(self, mode=c.Modes.GUIDED.value):
+        """Arm the drone for flight.
+
+        Upon successfully arming, the drone is now suitable to take off. The
+        drone should be connected before calling this function.
+
+        Parameters
+        ----------
+        mode : {GUIDED}, optional
+
+
+        Notes
+        -----
+        Only guided mode is currently supported.
+        """
+        self.mode = VehicleMode(mode)
+
+        self._logger.info('Arming...')
+        while not self.armed:
+            self.armed = True
+            time.sleep(c.ARM_RETRY_DELAY)
+
+        if self.armed:
+            self._logger.info('Armed')
+        else:
+            self._logger.error('Failed to arm')
 
     def _make_velocity_message(self, north, east, down):
         """Construct a mavlink message for sending velocity.

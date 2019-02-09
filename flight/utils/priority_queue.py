@@ -1,6 +1,15 @@
 import heapq
 
+# Used to ensure tasks of equal priority are first-in, first_out
 DEFAULT_COUNT = 900000
+# Used to determine an items priority from its value
+PRIORITY_MASK = 1000000
+# Index into front of queue
+FRONT = 0
+# Priority part of stored values
+PRIORITY = 0
+# Item part of stored values
+ITEM = 1
 
 class PriorityQueue():
     """Custom priority queue implementation.
@@ -30,7 +39,17 @@ class PriorityQueue():
         item : Any
             The data being inserted into the queue.
 
+        Notes
+        -----
+        If an item of equal or higher priority to the front of the queue is
+        pushed, the current front will be dequed.
+
         """
+        # Interrupt tasks of equal or lesser priority
+        if len(self._queue) and (priority.value <=
+                self._queue[FRONT][PRIORITY] // PRIORITY_MASK):
+            self._queue.pop()
+
         val = int('{}{}'.format(priority.value, PriorityQueue.count))
         PriorityQueue.count += 1
         heapq.heappush(self._queue, (val, item))
@@ -51,7 +70,7 @@ class PriorityQueue():
     def top(self):
         if len(self):
         # Index 0 is priority, index 1 is the item.
-            return self._queue[0][1]
+            return self._queue[FRONT][ITEM]
         else:
             return None
 

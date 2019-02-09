@@ -21,8 +21,10 @@ class TakeoffTask(TaskBase):
         """
         super(TakeoffTask, self).__init__(drone)
         self._target_alt = altitude
-
     def perform(self):
+        if not self._drone.armed:
+            self._drone.arm()
+
         current_altitude = self._drone.rangefinder.distance
 
         if current_altitude >= self._target_alt * f.PERCENT_TARGET_ALTITUDE:
