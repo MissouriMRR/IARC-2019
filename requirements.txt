@@ -1,7 +1,16 @@
 dronekit == 2.9.1
-pymavlink == 2.2.1
+pymavlink == 2.2.21
 mavproxy == 1.7.7
 coloredlogs
 simple_pid
 matplotlib
 numpy
+flask
+pandas
+setuptools
+future
+lxml
+opencv-python
+scipy
+sklearn
+serial
