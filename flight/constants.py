@@ -67,6 +67,29 @@ class MavBitmasks(Enum):
     SET_POSITION_TARGET = 0b0000111111000111
     SET_ATTITUDE_TARGET = 0b00000000
 
+ATTR_NAME = 0
+ATTR_DETAIL = 1
+
+# All the attributes (of interest) that can be logged/graphed.
+# Get a list of attributes with ATTRIBUTE_TO_FUNCTION.keys().
+# Get a list of (attribute, function) tubles with ATTRIBUTE_TO_FUNCTION.iteritems().
+ATTRIBUTE_TO_FUNCTION = {
+    "pitch":            ["attitude", "pitch"],
+    "yaw":              ["attitude", "yaw"],
+    "roll":             ["attitude", "roll"],
+    "vx":               ["velocity", 0],
+    "vy":               ["velocity", 1],
+    "vz":               ["velocity", 2],
+    "battery_voltage":  ["battery", "voltage"],
+    "altitude":         ["rangefinder", "distance"],
+    "heading":          ["heading"],
+    "airspeed":         ["airspeed"],
+    "flow_x":           ["optical_flow", "flow_x"],
+    "flow_y":           ["optical_flow", "flow_y"],
+    "flow_quality":     ["optical_flow", "quality"],
+    "flow_distance":    ["optical_flow", "ground_distance"]
+}
+
 # Drone enum types mapped to connection strings
 # See http://python.dronekit.io/guide/connecting_vehicle.html
 # and http://ardupilot.org/dev/docs/learning-ardupilot-the-example-sketches.html.
@@ -77,6 +100,9 @@ CONNECTION_STR_DICT = {
 
 # How often to run safety checks
 SAFETY_CHECKS_DELAY = 0.5
+
+# How often data is logged/sent to grapher
+LOGGING_DELAY = 0.1
 
 # How often to run main control loop
 DELAY_INTERVAL = 0.1

@@ -14,9 +14,13 @@ from ..tasks.hover_task import HoverTask
 from ..tasks.land_task import LandTask
 from ..tasks.linear_movement_task import LinearMovementTask
 from ..tasks.takeoff_task import TakeoffTask
+from ...tools.data_distributor.data_splitter import DataSplitter
 from ..utils.priority_queue import PriorityQueue
 from ..utils.timer import Timer
 from ... import flightconfig as f
+
+SAFETY_CHECKS_TAG = "Safety Checks"
+LOGGING_AND_RTG_TAG = "Logging and RTG"
 
 class DroneController(object):
     """Controls the actions of a drone.
@@ -32,6 +36,8 @@ class DroneController(object):
         A PriorityQueue holding tasks to be performed.
     _safety_event : Event
         Set when an unsafe condition is observed.
+    _splitter : tools.data_distributor.DataSplitter
+        Used to send (split) data between the logger and the real-time grapher.
     """
 
     def __init__(self, drone):
@@ -47,6 +53,13 @@ class DroneController(object):
         # Initialize the logger
         self._logger = logging.getLogger(__name__)
         coloredlogs.install(level=logging.INFO)
+
+        # Initialize the data splitter
+        # NOTE: Real-time graphing not yet tested
+        self._splitter = DataSplitter(
+            logger_desired_headers=[header for header in c.ATTRIBUTE_TO_FUNCTION.keys()],
+            use_rtg=False
+        )
 
         # Connect to the drone
         self._logger.info('Connecting...')
@@ -66,18 +79,24 @@ class DroneController(object):
         """
         self._logger.info('Controller starting')
         try:
+            timer = Timer()
             # Start up safety checking
-            safety_checks_timer = Timer()
-            safety_checks_timer.add_callback(
-                "safety_checks", c.SAFETY_CHECKS_DELAY, self._do_safety_checks,
+            timer.add_callback(
+                SAFETY_CHECKS_TAG, c.SAFETY_CHECKS_DELAY, self._do_safety_checks,
                 recurring=True)
+
+            # Start up logging/real-time-graphing (if active)
+            if self._splitter.active_tools:
+                timer.add_callback(LOGGING_AND_RTG_TAG, c.LOGGING_DELAY,
+                    lambda: self._splitter.send(self._gather_data()),
+                    recurring=True)
 
             # NOTE: the only way to stop the loop is to raise an exception,
             # such as with a keyboard interrupt
             while self._update():
                 # Check that safe conditions have not been violated
                 if self._safety_event.is_set():
-                    safety_checks_timer.shutdown()
+                    timer.stop_callback(SAFETY_CHECKS_TAG)
                     raise self._exception # Only set when exception is found
                 # Let the program breath
                 sleep(c.DELAY_INTERVAL)
@@ -95,6 +114,11 @@ class DroneController(object):
             # Land the drone
             self._land()
             self._logger.info('Finished emergency land')
+
+            # Stop logging/graphing
+            timer.stop_callback(LOGGING_AND_RTG_TAG)
+            sleep(c.DELAY_INTERVAL) # Sleep in case was doing write operation
+            self._splitter.exit()
 
     def add_hover_task(self, altitude, duration, priority=c.Priorities.LOW):
         """Instruct the drone to hover.
@@ -243,3 +267,39 @@ class DroneController(object):
             sleep(c.DELAY_INTERVAL)
         self._logger.info('Disarm complete')
         self._logger.info('Finished land')
+
+    def _gather_data(self):
+        """Puts all gatherable data into a dictionary.
+
+        Notes
+        -----
+        Used to send a dictionary of data to a DataSplitter object, which logs
+        and potential graphs the data.
+
+        Some of the attributes we graph require pulling class attributes:
+            Ex. rangefinder.distance
+        While for other just the class itself is fine:
+            Ex. airspeed
+        In addition, some attributes require you to index into them for data:
+            Ex. velocity[0] => x velocity
+
+        Hence the ugly if elif elif structure beow.
+
+        Returns
+        -------
+        dict
+        """
+        data = {}
+        for attr_name, attr in c.ATTRIBUTE_TO_FUNCTION.iteritems():
+            if len(attr) == 1:
+                data[attr_name] = getattr(self._drone, attr[c.ATTR_NAME])
+            elif len(attr) == 2 and isinstance(attr[c.ATTR_DETAIL], int):
+                data[attr_name] = getattr(
+                    self._drone, attr[c.ATTR_NAME])[attr[c.ATTR_DETAIL]]
+            elif len(attr) == 2 and isinstance(attr[c.ATTR_DETAIL], str):
+                data[attr_name] = getattr(
+                    getattr(self._drone, attr[c.ATTR_NAME]),
+                    attr[c.ATTR_DETAIL])
+
+        return data
+
