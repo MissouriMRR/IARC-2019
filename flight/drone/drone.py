@@ -133,7 +133,8 @@ class Drone(Vehicle):
 
         self._logger.info('Arming...')
         while not self.armed:
-            self.armed = True
+            if self.is_armable:
+                self.armed = True
             time.sleep(c.ARM_RETRY_DELAY)
 
         if self.armed:
