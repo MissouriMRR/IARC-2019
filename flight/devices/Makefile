@@ -7,7 +7,8 @@ TARGET_NAME=mrrdt_pyrealsense
 
 # library source dependencies
 OBJECTS = bindings.o \
-		  conversion.o
+		  conversion.o \
+		  realsense.o
 
 # CUDA compilation flags
 CUDA_VERSION=9.2
@@ -43,7 +44,7 @@ BOOST_PYTHON_FLAGS+=-lboost_python-py$(PYTHON_VERSION_RAW) $(BOOST_PYTHON_DEPS)
 # general compilation flags
 OPENCV_CUDA_CXXFLAGS=$(OPENCV_FLAGS) -I$(CUDA_HOME)/include $(PYTHON_INCLUDE) -fPIC
 CXXFLAGS+= -std=c++14 -O3 -g -ggdb $(OPENCV_CUDA_CXXFLAGS)
-LDFLAGS+= $(OPENCV_LIB) $(BOOST_PYTHON_FLAGS) -L$(CUDA_HOME)/lib64 $(CUDA_DEPS)
+LDFLAGS+= $(OPENCV_LIB) $(BOOST_PYTHON_FLAGS) -L$(CUDA_HOME)/lib64 $(CUDA_DEPS) -lrealsense2
 CUDAFLAGS+= --compiler-options '-fPIC'
 
 # add .cpp and .cu (CUDA kernel) to the known suffices
@@ -70,5 +71,6 @@ clean:
 	rm -f *.o *.so
 
 # library dependencies and their prerequisites
-bindings.o:      bindings.cpp conversion.o
+bindings.o:      bindings.cpp conversion.o realsense.o
 conversion.o:    conversion.cpp conversion.hpp
+realsense.o: 	 realsense.cpp realsense.hpp
