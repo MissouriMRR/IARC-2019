@@ -17,10 +17,11 @@ from ..tasks.takeoff_task import TakeoffTask
 from ...tools.data_distributor.data_splitter import DataSplitter
 from ..utils.priority_queue import PriorityQueue
 from ..utils.timer import Timer
-from ... import flightconfig as f
+from ... import config
 
 SAFETY_CHECKS_TAG = "Safety Checks"
 LOGGING_AND_RTG_TAG = "Logging and RTG"
+
 
 class DroneController(object):
     """Controls the actions of a drone.
@@ -57,7 +58,8 @@ class DroneController(object):
         # Initialize the data splitter
         # NOTE: Real-time graphing not yet tested
         self._splitter = DataSplitter(
-            logger_desired_headers=[header for header in c.ATTRIBUTE_TO_FUNCTION.keys()],
+            logger_desired_headers=[header for header in
+                                    c.ATTRIBUTE_TO_FUNCTION.keys()],
             use_rtg=False
         )
 
@@ -82,14 +84,16 @@ class DroneController(object):
             timer = Timer()
             # Start up safety checking
             timer.add_callback(
-                SAFETY_CHECKS_TAG, c.SAFETY_CHECKS_DELAY, self._do_safety_checks,
+                SAFETY_CHECKS_TAG, c.SAFETY_CHECKS_DELAY,
+                self._do_safety_checks,
                 recurring=True)
 
             # Start up logging/real-time-graphing (if active)
             if self._splitter.active_tools:
                 timer.add_callback(LOGGING_AND_RTG_TAG, c.LOGGING_DELAY,
-                    lambda: self._splitter.send(self._gather_data()),
-                    recurring=True)
+                                   lambda: self._splitter.send(
+                                       self._gather_data()),
+                                   recurring=True)
 
             # NOTE: the only way to stop the loop is to raise an exception,
             # such as with a keyboard interrupt
@@ -97,7 +101,7 @@ class DroneController(object):
                 # Check that safe conditions have not been violated
                 if self._safety_event.is_set():
                     timer.stop_callback(SAFETY_CHECKS_TAG)
-                    raise self._exception # Only set when exception is found
+                    raise self._exception  # Only set when exception is found
                 # Let the program breath
                 sleep(c.DELAY_INTERVAL)
 
@@ -106,10 +110,10 @@ class DroneController(object):
 
             # Only print stack trace for completely unexpected things
             self._logger.critical(type(e).__name__)
-            if f.DEBUG is True:
+            if config.DEBUG is True:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exception(exc_type, exc_value, exc_traceback,
-                              limit=2, file=sys.stdout)
+                                          limit=2, file=sys.stdout)
 
             # Land the drone
             self._land()
@@ -117,7 +121,7 @@ class DroneController(object):
 
             # Stop logging/graphing
             timer.stop_callback(LOGGING_AND_RTG_TAG)
-            sleep(c.DELAY_INTERVAL) # Sleep in case was doing write operation
+            sleep(c.DELAY_INTERVAL)  # Sleep in case was doing write operation
             self._splitter.exit()
 
     def add_hover_task(self, altitude, duration, priority=c.Priorities.LOW):
@@ -167,7 +171,6 @@ class DroneController(object):
         """
         new_task = LinearMovementTask(self._drone, direction, duration)
         self._task_queue.push(priority, new_task)
-
 
     def add_land_task(self, priority=c.Priorities.MEDIUM):
         """Instruct the drone to land.
@@ -226,21 +229,23 @@ class DroneController(object):
         # If there are no more tasks, begin to hover.
         if self._drone.armed and self._current_task is None:
             self._logger.info('No more tasks - beginning long hover')
-            self.add_hover_task(f.DEFAULT_ALTITUDE, c.DEFAULT_HOVER_DURATION)
+            self.add_hover_task(config.DEFAULT_ALTITUDE,
+                                c.DEFAULT_HOVER_DURATION)
 
         return True
 
     def _do_safety_checks(self):
         """Check for exceptional conditions."""
         try:
-            if self._drone.airspeed > f.SPEED_THRESHOLD:
+            if self._drone.airspeed > config.SPEED_THRESHOLD:
                 raise exceptions.VelocityExceededThreshold()
 
-            if (self._drone.rangefinder.distance > f.MAXIMUM_ALLOWED_ALTITUDE):
+            if (
+                    self._drone.rangefinder.distance > config.MAXIMUM_ALLOWED_ALTITUDE):
                 raise exceptions.AltitudeExceededThreshold()
 
         except Exception as e:
-            self._exception = e # This variable only set when exception found
+            self._exception = e  # This variable only set when exception found
             self._safety_event.set()
 
         # TODO: Add more safety checks here
@@ -302,4 +307,3 @@ class DroneController(object):
                     attr[c.ATTR_DETAIL])
 
         return data
-

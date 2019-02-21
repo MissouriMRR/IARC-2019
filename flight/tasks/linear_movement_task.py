@@ -1,11 +1,12 @@
 from task_base import TaskBase
 from simple_pid import PID
 from .. import constants as c
-from ... import flightconfig as f
+from ... import config
 
 KP = 1
 KI = 0
 KD = 0
+
 
 class LinearMovementTask(TaskBase):
     """A task that moves the drone along an axis."""
@@ -23,11 +24,11 @@ class LinearMovementTask(TaskBase):
             How many seconds to travel for.
         """
         super(LinearMovementTask, self).__init__(drone)
-        self._pid_alt = PID(KP, KI, KP, setpoint=f.DEFAULT_ALTITUDE)
-        self._count = duration * (1.0/c.DELAY_INTERVAL)
+        self._pid_alt = PID(KP, KI, KP, setpoint=config.DEFAULT_ALTITUDE)
+        self._count = duration * (1.0 / c.DELAY_INTERVAL)
         velocities = []
         for v in direction.value:
-            velocities.append(v * f.DEFAULT_SPEED)
+            velocities.append(v * config.DEFAULT_SPEED)
         self._vx = velocities[0]
         self._vy = velocities[1]
         self._vz = velocities[2]
