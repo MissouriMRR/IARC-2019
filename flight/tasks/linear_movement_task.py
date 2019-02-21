@@ -3,15 +3,34 @@ from simple_pid import PID
 from .. import constants as c
 from ... import config
 
-KP = 1
+KP = 0.25
 KI = 0
 KD = 0
 
 
 class LinearMovementTask(TaskBase):
-    """A task that moves the drone along an axis."""
+    """A task that moves the drone along an axis.
 
-    def __init__(self, drone, direction, duration):
+    Attributes
+    ----------
+    _duration : float
+        How long to move for in seconds.
+    _pid_alt : simple_pid.PID
+        A PID controller used for altitude.
+    _count : int
+        An internval variable for keeping track of state.
+    _vx : double
+        Velocity in the x direction.
+    _vy : double
+        Velocity in the y direction.
+    _vz : double
+        Velocity in the z direction.
+    _target_altitude : double
+        The altitude in metters which the drone should maintain during the
+        movement.
+    """
+
+    def __init__(self, drone, direction, duration, altitude=f.DEFAULT_ALTITUDE):
         """Initialize a task for moving along an axis.
 
         Parameters
@@ -32,10 +51,15 @@ class LinearMovementTask(TaskBase):
         self._vx = velocities[0]
         self._vy = velocities[1]
         self._vz = velocities[2]
+        self._target_altitude = altitude
 
     def perform(self):
-        # Get control value
-        zv = -self._pid_alt(self._drone.rangefinder.distance)
+        # Determine if we need to correct altitude
+        current_alt = self._drone.rangefinder.distance
+        if abs(current_alt - self._target_altitude) > c.ACCEPTABLE_ALTITUDE_DEVIATION:
+            zv = -self._pid_alt(self._drone.rangefinder.distance)
+        else:
+            zv = 0
         # Send 0 velocities to drone (excepting altitude correction)
         self._drone.send_velocity(self._vx, self._vy, zv)
         self._count -= 1

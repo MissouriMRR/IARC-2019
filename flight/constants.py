@@ -119,3 +119,7 @@ DEFAULT_HOVER_DURATION = 480
 # The mavlink identifier for optical flow
 # See https://mavlink.io/en/messages/common.html#OPTICAL_FLOW
 OPTICAL_FLOW_MESSAGE = 'OPTICAL_FLOW'
+
+# How many meters the drone can be away from target altitude before correcting
+# altitude
+ACCEPTABLE_ALTITUDE_DEVIATION = 0.1
