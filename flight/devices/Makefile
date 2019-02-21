@@ -3,14 +3,11 @@ CXX=g++
 NVCC=nvcc
 
 # name of the library to be built
-TARGET_NAME=cv2_cuda
+TARGET_NAME=mrrdt_pyrealsense
 
 # library source dependencies
 OBJECTS = bindings.o \
-          line_detector.o \
-		  conversion.o \
-          kernel.o	\
-		  build_point_list.o
+		  conversion.o
 
 # CUDA compilation flags
 CUDA_VERSION=9.2
@@ -45,7 +42,7 @@ BOOST_PYTHON_FLAGS+=-lboost_python-py$(PYTHON_VERSION_RAW) $(BOOST_PYTHON_DEPS)
 
 # general compilation flags
 OPENCV_CUDA_CXXFLAGS=$(OPENCV_FLAGS) -I$(CUDA_HOME)/include $(PYTHON_INCLUDE) -fPIC
-CXXFLAGS+= -std=c++11 -O3 -g -ggdb $(OPENCV_CUDA_CXXFLAGS)
+CXXFLAGS+= -std=c++14 -O3 -g -ggdb $(OPENCV_CUDA_CXXFLAGS)
 LDFLAGS+= $(OPENCV_LIB) $(BOOST_PYTHON_FLAGS) -L$(CUDA_HOME)/lib64 $(CUDA_DEPS)
 CUDAFLAGS+= --compiler-options '-fPIC'
 
@@ -74,7 +71,4 @@ clean:
 
 # library dependencies and their prerequisites
 bindings.o:      bindings.cpp conversion.o
-kernel.o:        kernel.cu
-build_point_list.o: build_point_list.cu
-conversion.o:    conversion.cpp
-line_detector.o: line_detector.cpp conversion.o build_point_list.o
+conversion.o:    conversion.cpp conversion.hpp
