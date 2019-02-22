@@ -1,3 +1,5 @@
+""""A class that allows for the execution of arbitrary code at set intervals."""
+
 from time import sleep
 from timeit import default_timer as timer
 import threading

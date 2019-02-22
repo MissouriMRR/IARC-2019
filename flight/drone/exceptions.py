@@ -1,3 +1,8 @@
+"""
+Custom exceptions used throughout the flight code, often describing an
+unsafe condition that must be checked for periodically.
+"""
+
 class AltitudeException(Exception):
     """
     Thrown when altitude is too low or too high.

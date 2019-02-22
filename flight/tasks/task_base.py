@@ -1,3 +1,5 @@
+"""A class that abstracts the duties of a task the drone might perform."""
+
 # Standard Library
 import abc
 

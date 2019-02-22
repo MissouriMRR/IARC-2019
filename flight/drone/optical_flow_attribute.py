@@ -1,4 +1,9 @@
 
+"""
+A class that expands dronekit.vehicle, allowing for the monitoring of
+optical flow sensor data.
+"""
+
 class OpticalFlow(object):
     """The Optical Flow readings.
 

@@ -1,3 +1,8 @@
+"""
+A class that acts as an interface to the physical drone, allowing for the
+reading of sensor data and control of movement.
+"""
+
 from dronekit import Vehicle, VehicleMode
 import logging
 from math import radians
@@ -5,8 +10,8 @@ from pymavlink import mavutil
 import time
 
 from optical_flow_attribute import OpticalFlow
-from .. import constants as c
-from ..utils.helpers import to_quaternion
+from flight import constants as c
+from flight.utils.helpers import to_quaternion
 
 class Drone(Vehicle):
     """Interface to drone and its sensors.
@@ -133,8 +138,7 @@ class Drone(Vehicle):
 
         self._logger.info('Arming...')
         while not self.armed:
-            if self.is_armable:
-                self.armed = True
+            self.armed = True
             time.sleep(c.ARM_RETRY_DELAY)
 
         if self.armed:

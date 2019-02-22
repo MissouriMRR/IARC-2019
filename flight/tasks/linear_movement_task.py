@@ -1,14 +1,20 @@
+"""
+A TaskBase subclass for moving forward, backward, left, right, up,
+and down.
+"""
+
 from task_base import TaskBase
 from simple_pid import PID
-from .. import constants as c
-from ... import config
 
-KP = 0.25
-KI = 0
-KD = 0
+import config
+from flight import constants as c
 
+# See https://en.wikipedia.org/wiki/PID_controller
+KP = 0.25 # Proportional term
+KI = 0 # Integral term
+KD = 0 # Derivative term
 
-class LinearMovementTask(TaskBase):
+class LinearMovement(TaskBase):
     """A task that moves the drone along an axis.
 
     Attributes
@@ -30,7 +36,7 @@ class LinearMovementTask(TaskBase):
         movement.
     """
 
-    def __init__(self, drone, direction, duration, altitude=f.DEFAULT_ALTITUDE):
+    def __init__(self, drone, direction, duration, altitude=config.DEFAULT_ALTITUDE):
         """Initialize a task for moving along an axis.
 
         Parameters
@@ -42,9 +48,9 @@ class LinearMovementTask(TaskBase):
         duration : float
             How many seconds to travel for.
         """
-        super(LinearMovementTask, self).__init__(drone)
+        super(LinearMovement, self).__init__(drone)
         self._pid_alt = PID(KP, KI, KP, setpoint=config.DEFAULT_ALTITUDE)
-        self._count = duration * (1.0 / c.DELAY_INTERVAL)
+        self._count = duration * (1.0/c.DELAY_INTERVAL)
         velocities = []
         for v in direction.value:
             velocities.append(v * config.DEFAULT_SPEED)
@@ -54,6 +60,7 @@ class LinearMovementTask(TaskBase):
         self._target_altitude = altitude
 
     def perform(self):
+        """Perform one iteration of linear movement."""
         # Determine if we need to correct altitude
         current_alt = self._drone.rangefinder.distance
         if abs(current_alt - self._target_altitude) > c.ACCEPTABLE_ALTITUDE_DEVIATION:

@@ -1,3 +1,8 @@
+"""
+A class which wraps the heapq class. It is used to keep track of various
+tasks of differing proprities.
+"""
+
 import heapq
 
 # Used to ensure tasks of equal priority are first-in, first_out

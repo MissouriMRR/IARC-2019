@@ -1,5 +1,5 @@
 """
-All of the constant values used across all of the scripts are located here.
+Constant values which are changed rarely.
 """
 
 from enum import Enum

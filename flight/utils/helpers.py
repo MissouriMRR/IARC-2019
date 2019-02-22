@@ -1,3 +1,4 @@
+"""Helper functions."""
 
 from math import sin, cos, radians
 
