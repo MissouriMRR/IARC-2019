@@ -9,4 +9,5 @@ BOOST_PYTHON_MODULE(mrrdt_pyrealsense)
         .def("begin", &Realsense::begin, "")
         .def("depth", &Realsense::depth, "")
         .def("color", &Realsense::color, "");
+    /* .def("blobs", &Realsense::blobs, py::args("num_blobs", "min_area", "min_depth", "max_depth", "margin", "tolerance"), ""); */
 }
