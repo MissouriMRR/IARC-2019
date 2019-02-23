@@ -1,5 +1,6 @@
 """Provides a continuous command line prompt for testing drone capabilities."""
 
+import argparse
 import threading
 
 from flight.drone.drone_controller import DroneController
@@ -9,8 +10,11 @@ PROMPT_FOR_COMMAND = '> '
 
 
 def main():
+    parser = create_parser()
+    args = parser.parse_args()
+
     # Make the controller object
-    controller = DroneController(c.Drones.LEONARDO_SIM)
+    controller = DroneController(is_simulation=args.sim)
 
     # Make a thread whose target is a command line interface
     input_thread = threading.Thread(
@@ -22,6 +26,16 @@ def main():
 
     controller.run()
 
+
+def create_parser():
+    """Returns a configured argument parser."""
+    parser = argparse.ArgumentParser(description='Test flight commands.')
+    parser.add_argument('--sim',
+                        dest='sim',
+                        action='store_true',
+                        default=False,
+                        help='run simulator compatible flight code')
+    return parser
 
 class ExitRequested(Exception):
     """Raised when the input loop should stop."""

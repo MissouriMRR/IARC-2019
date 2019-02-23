@@ -12,12 +12,11 @@ from threading import Event
 from time import sleep
 import traceback
 
-from drone import Drone
-import exceptions
-
 import config
 from flight import constants as c
-from flight.tasks import Hover, Takeoff, LinearMovement, Land, Exit
+from drone import Drone
+import exceptions
+from flight.tasks import Hover, Takeoff, LinearMovement, Land, Exit, TakeoffSim
 from flight.utils.priority_queue import PriorityQueue
 from flight.utils.timer import Timer
 from tools.data_distributor.data_splitter import DataSplitter
@@ -25,6 +24,7 @@ from tools.data_distributor.data_splitter import DataSplitter
 SAFETY_CHECKS_TAG = "Safety Checks"
 LOGGING_AND_RTG_TAG = "Logging and RTG"
 
+LOG_LEVEL = logging.INFO
 
 class DroneController(object):
     """Controls the actions of a drone.
@@ -40,23 +40,36 @@ class DroneController(object):
         A PriorityQueue holding tasks to be performed.
     _safety_event : Event
         Set when an unsafe condition is observed.
+    _is_simulation : bool
+        Set to true when the code is intended for the simulator.
     _splitter : tools.data_distributor.DataSplitter
         Used to send (split) data between the logger and the real-time grapher.
     """
 
-    def __init__(self, drone):
+    def __init__(self, is_simulation=False):
         """Construct a drone controller.
 
         Parameters
         ----------
-        drone : c.Drone.{DRONE_NAME}"""
+        drone : c.Drone.{DRONE_NAME}
+        is_simulation : bool, optional
+            Set to true if being run with the simualator.
+        """
+
+        if is_simulation:
+            drone_version = c.Drones.LEONARDO_SIM
+        else:
+            drone_version = c.Drones.LEONARDO
+
         self._task_queue = PriorityQueue()
         self._current_task = None
         self._safety_event = Event()
 
+        self._is_simulation = is_simulation
+
         # Initialize the logger
         self._logger = logging.getLogger(__name__)
-        coloredlogs.install(level=logging.INFO)
+        coloredlogs.install(LOG_LEVEL)
 
         # Initialize the data splitter
         # NOTE: Real-time graphing not yet tested
@@ -68,7 +81,7 @@ class DroneController(object):
 
         # Connect to the drone
         self._logger.info('Connecting...')
-        connection_string = c.CONNECTION_STR_DICT[drone]
+        connection_string = c.CONNECTION_STR_DICT[drone_version]
         self._drone = connect(
             connection_string, wait_ready=True,
             heartbeat_timeout=c.CONNECT_TIMEOUT, status_printer=None,
@@ -156,7 +169,11 @@ class DroneController(object):
         -----
         Internally, the priority of this task is always set to HIGH.
         """
-        new_task = Takeoff(self._drone, altitude)
+        if self._is_simulation:
+            new_task = TakeoffSim(self._drone, altitude)
+        else:
+            new_task = Takeoff(self._drone, altitude)
+
         self._task_queue.push(priority, new_task)
 
     def add_linear_movement_task(
