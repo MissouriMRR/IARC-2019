@@ -1,0 +1,26 @@
+---
+
+- hosts: all
+  vars_prompt: 
+      - name: "branch" 
+        prompt: "Enter IARC-2019 branch to grab." 
+        private: no 
+  tasks:
+    - apt:
+        name:
+          - git
+          - python
+          - python3
+          - python-setuptools
+          - python-pip
+
+    - git:
+        repo: https://github.com/MST-MRR/IARC-2019.git
+        dest: /root/IARC-2019
+        version: "{{ branch }}"
+
+    - pip:
+        requirements: /root/IARC-2019/requirements.txt
+
+    - command: pipenv install --skip-lock
+    - command: pipenv run python /root/IARC-2019/run.py -d

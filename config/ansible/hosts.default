@@ -1,0 +1,9 @@
+# copy this file to a file named "hosts" in the same directory
+
+[overwatch]
+
+# Drones with cameras, but no laser and realsense
+[qr-drones]
+
+# All drones
+[drones:children]
