@@ -58,10 +58,16 @@ Build the project
 make clean
 make
 ```
-Finish installationn by adding the module to your Python path variable.
+Finish installation by adding the module to your Python path variable.
 ```
 echo 'export PYTHONPATH="${PYTHONPATH}:$(pwd)"' >> ~/.bashrc
+source ~/.bashrc
 ```
+Now you should be able to run 
+```Python
+import mrrdt_pyrealsense
+```
+in your Python 3.6 interpreter!
 
 ### Known Issues
 If you get an error analagous to
