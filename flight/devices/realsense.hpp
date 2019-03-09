@@ -50,11 +50,6 @@ public:
   void begin();
   PyObject *depth();
   PyObject *color();
-  /*
-  PyObject *blobs(int num_blobs = 1, int min_area = DEFAULT_MIN_AREA,
-                  double min_depth = D415_MIN_DETPH, double max_depth = D415_MAX_DEPTH,
-                  double margin = DEFAULT_MARGIN, double tolerance = DEFAULT_TOLERANCE);
-  */
   float get_depth_scale();
   virtual ~Realsense();
 };
