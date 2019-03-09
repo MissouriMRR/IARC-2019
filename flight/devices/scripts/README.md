@@ -1,6 +1,16 @@
 # Installation Guide
 ## Ubuntu 18.04
-### Section <insert section here>: Installing the Realsense SDK
+### Install necessary packages
+First, make sure Ubuntu is up-to-date:
+```
+sudo apt-get update
+sudo apt-get upgrade
+```
+Then install the wget utility. This will be used to download the install script.
+```
+sudo apt-get install wget
+```
+### Installing the Realsense SDK
 #### Run the install script.
 To download an run a script which will perform all necessary actions to install the Intel Realsense SDK 2.0, run the following set of commands in
 your terminal:
