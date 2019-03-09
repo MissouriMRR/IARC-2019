@@ -5,10 +5,14 @@ NVCC=nvcc
 # name of the library to be built
 TARGET_NAME=mrrdt_pyrealsense
 
+VPATH=numpy/:realsense/
+
 # library source dependencies
-OBJECTS = bindings.o \
+_OBJECTS = bindings.o \
 		  conversion.o \
 		  realsense.o
+		  
+OBJECTS = $(patsubst %, bin/%, $(_OBJECTS))
 
 # OS specific macros
 PYTHON_OS_NAME_LINUX=x86_64-linux-gnu
@@ -43,21 +47,24 @@ LDFLAGS+= $(OPENCV_LIB) $(BOOST_PYTHON_FLAGS) -lrealsense2
 # add .cpp and .cu (CUDA kernel) to the known suffices
 .SUFFIXES: .cpp
 
+.PHONY: clean
+
 # rule for compiling .cpp files into .o files
 .cpp.o: $<
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CXXFLAGS) $< -o bin/$@
 
 # define the primary build task.
 default: all
 all: $(TARGET_NAME).so
 
 # build the shared library file.
-$(TARGET_NAME).so: $(OBJECTS)
-	$(CXX) -shared $(OBJECTS) $(LDFLAGS) -o $@
+$(TARGET_NAME).so: $(_OBJECTS)
+	$(CXX) -shared $(OBJECTS) $(LDFLAGS) -o bin/$@
 
 # remove zero or more .o and .so files on clean
 clean:
-	rm -f *.o *.so
+	rm -rf bin
+	mkdir bin
 
 # library dependencies and their prerequisites
 bindings.o:      bindings.cpp conversion.o realsense.o

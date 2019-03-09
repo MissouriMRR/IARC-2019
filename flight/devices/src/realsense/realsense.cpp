@@ -7,74 +7,6 @@
         return Py_None;     \
     }
 
-class Pixel
-{
-  private:
-    int m_x;
-    int m_y;
-    float pixel[2];
-    cv::Mat *m_src;
-
-  public:
-    Pixel(int x, int y, cv::Mat *src)
-        : m_x(std::max(0, std::min(x, src->cols))),
-          m_y(std::max(0, std::min(y, src->rows))),
-          m_src(src)
-    {
-        pixel[0] = m_x;
-        pixel[1] = m_y;
-    }
-
-    bool operator==(const Pixel &rhs) const
-    {
-        return m_x == rhs.m_x && m_y == rhs.m_y;
-    }
-
-    bool operator!=(const Pixel &rhs) const
-    {
-        return !((*this) == rhs);
-    }
-
-    int x() const
-    {
-        return m_x;
-    }
-
-    int y() const
-    {
-        return m_y;
-    }
-
-    uint16_t get() const
-    {
-        return m_src->at<uint16_t>(m_y, m_x);
-    }
-
-    void neighbors(std::vector<std::pair<int, int>> &neighbors, uint16_t exclude) const
-    {
-        neighbors.clear();
-
-        std::array<std::pair<int, int>, 8> res{
-            std::pair<int, int>{m_x - 1, m_y - 1},
-            std::pair<int, int>{m_x, m_y - 1},
-            std::pair<int, int>{m_x + 1, m_y - 1},
-            std::pair<int, int>{m_x + 1, m_y},
-            std::pair<int, int>{m_x + 1, m_y + 1},
-            std::pair<int, int>{m_x, m_y + 1},
-            std::pair<int, int>{m_x - 1, m_y + 1},
-            std::pair<int, int>{m_x - 1, m_y}};
-
-        for (auto &&point : res)
-        {
-            if ((0 <= point.first < m_src->cols - 1 && 0 <= point.second < m_src->rows - 1) &&
-                (m_src->at<uint16_t>(point.second, point.first) != exclude))
-            {
-                neighbors.emplace_back(point.first, point.second);
-            }
-        }
-    }
-};
-
 static std::atomic_bool alive{true};
 static std::thread *video_processing_thread_reference = nullptr;
 
@@ -103,14 +35,7 @@ void Realsense::begin()
     static std::thread video_processing_thread([&]() {
         rs2::processing_block frame_processor([&](rs2::frameset data,
                                                   rs2::frame_source &source) {
-            data = data.apply_filter(m_align_to);
-            data = data.apply_filter(m_decimator);
-            data = data.apply_filter(m_depth_to_disparity);
-            data = data.apply_filter(m_spatial);
-            data = data.apply_filter(m_temporal);
-            data = data.apply_filter(m_disparity_to_depth);
             m_raw_depth_queue.enqueue(data.get_depth_frame());
-            data = data.apply_filter(m_color_map);
             source.frame_ready(data);
         });
 

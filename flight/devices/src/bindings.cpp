@@ -1,5 +1,5 @@
-#include "bindings.hpp"
-#include "realsense.hpp"
+#include "numpy/bindings.hpp"
+#include "realsense/realsense.hpp"
 
 BOOST_PYTHON_MODULE(mrrdt_pyrealsense)
 {

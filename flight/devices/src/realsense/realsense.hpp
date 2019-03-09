@@ -1,7 +1,7 @@
 #ifndef REALSENSE_HPP
 #define REALSENSE_HPP
 
-#include "conversion.hpp"
+#include "../numpy/conversion.hpp"
 
 #include <librealsense2/rs.hpp>
 #include <librealsense2/rsutil.h>
@@ -39,7 +39,7 @@ private:
   rs2::pipeline_profile m_profile;
   rs2::frame_queue m_queue;
   rs2::frame_queue m_raw_depth_queue;
-  rs2::frameset m_current;
+  rs2::frameset m_current; 
 
   bool m_has_begun;
 

@@ -51,7 +51,7 @@ git checkout feature/realsense
 ```
 Change to the module folder
 ```
-cd flight/devices/
+cd flight/devices/src
 ```
 Build the project
 ```
@@ -60,6 +60,7 @@ make
 ```
 Finish installation by adding the module to your Python path variable.
 ```
+cd bin
 echo 'export PYTHONPATH="${PYTHONPATH}:$(pwd)"' >> ~/.bashrc
 source ~/.bashrc
 ```
@@ -68,6 +69,9 @@ Now you should be able to run the following import successfully in your system's
 import mrrdt_pyrealsense
 ```
 If no errors popped up at anytime during the install, you should be good to go!
+
+### Running tests
+
 
 ### Known Issues
 If you get an error analagous to
