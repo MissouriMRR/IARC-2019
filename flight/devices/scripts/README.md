@@ -6,7 +6,7 @@ First, make sure Ubuntu is up-to-date:
 sudo apt-get update
 sudo apt-get upgrade
 ```
-Then install the wget utility. This will be used to download the install script.
+Then install the `wget` utility. This will be used to download the install script.
 ```
 sudo apt-get install wget
 ```
