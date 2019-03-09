@@ -17,7 +17,7 @@ sudo rm -rf opencv_contrib
 mv opencv-3.4.4 opencv
 mv opencv_contrib-3.4.4 opencv_contrib
 
-pip3 install numpy
+sudo -H pip3 install numpy
 cd ~/opencv
 mkdir build
 cd build

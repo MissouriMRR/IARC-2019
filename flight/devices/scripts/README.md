@@ -30,13 +30,48 @@ Since this module uses [Boost Python](https://www.boost.org/doc/libs/1_69_0/libs
 ```
 sudo apt-get install libboost-all-dev
 ```
-### Install OpenCV 3.4.4
+#### Install OpenCV 3.4.4
 Similar to before, here is a script which will perform the setup and installation required for OpenCV 3.4.4 alongside Python 3 bindings:
 ```
 cd ~/scripts
 wget -w0 https://raw.githubusercontent.com/MissouriMRR/IARC-2019/feature/realsense/flight/devices/scripts/install_opencv.sh
 sudo chmod +x install_opencv.sh
 ./install_opencv.sh
+```
+
+#### Building the Python Module
+Download the repository
+```
+git clone https://github.com/MissouriMRR/IARC-2019.git
+```
+If this is not in master yet, check out this branch:
+```
+cd IARC-2019
+git checkout feature/realsense
+```
+Change to the module folder
+```
+cd flight/devices/
+```
+Build the project
+```
+make clean
+make
+```
+Finish installationn by adding the module to your Python path variable.
+```
+echo 'export PYTHONPATH="${PYTHONPATH}:$(pwd)"' >> ~/.bashrc
+```
+
+### Known Issues
+If you get an error analagous to
+```
+conversion.hpp:18:91: fatal error: /usr/local/lib/python3.6/dist-packages/numpy/core/include/numpy/ndarrayobject.h: No such file or directory
+ #include "/usr/local/lib/python3.6/dist-packages/numpy/core/include/numpy/ndarrayobject.h"
+```
+Make sure you installed numpy as the root user like so
+```
+sudo -H pip3 install numpy
 ```
 
 ## Note
