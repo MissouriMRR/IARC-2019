@@ -33,9 +33,7 @@ sudo apt-get install libboost-all-dev
 ### Install OpenCV 3.4.4
 Similar to before, here is a script which will perform the setup and installation required for OpenCV 3.4.4 alongside Python 3 bindings:
 ```
-cd ~
-mkdir scripts
-cd scripts
+cd ~/scripts
 wget -w0 https://raw.githubusercontent.com/MissouriMRR/IARC-2019/feature/realsense/flight/devices/scripts/install_opencv.sh
 sudo chmod +x install_opencv.sh
 ./install_opencv.sh
