@@ -82,6 +82,6 @@ sudo -H pip3 install numpy
 
 ## Note
 
-This guide was updated on March 8th, 2019.
+This guide was updated on March 9th, 2019.
 
 
