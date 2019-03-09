@@ -38,3 +38,4 @@ sudo ldconfig
 cd /usr/local/python/cv2/python-3.6
 sudo mv cv2.cpython-36m-x86_64-linux-gnu.so cv2.so
 echo 'export PYTHONPATH="${PYTHONPATH}:/usr/local/python/cv2/python-3.6/"' >> ~/.bashrc
+source ~/.bashrc
