@@ -31,8 +31,6 @@ Since this module uses [Boost Python](https://www.boost.org/doc/libs/1_69_0/libs
 sudo apt-get install libboost-all-dev
 ```
 ### Install OpenCV 3.4.4
-```
-sudo ap
 
 ## Note
 
