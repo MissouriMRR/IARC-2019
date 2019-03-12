@@ -123,3 +123,6 @@ OPTICAL_FLOW_MESSAGE = 'OPTICAL_FLOW'
 # How many meters the drone can be away from target altitude before correcting
 # altitude
 ACCEPTABLE_ALTITUDE_DEVIATION = 0.1
+
+# Maximum roll and pitch (in degrees) before being considered unsafe
+MAXIMUM_PITCH_ROLL = 45

@@ -73,5 +73,17 @@ class TakeoffTimeoutException(Exception):
     """
     pass
 
+class RollExceededMaximum(Exception):
+    """
+    Thrown when the roll of the drone exceeds a safe range.
+    """
+    pass
+
+class PitchExceededMaximum(Exception):
+    """
+    Thrown when the pitch of the drone exceeds a safe range.
+    """
+    pass
+
 
 # TODO: Add more safety-related exceptions here

@@ -12,6 +12,7 @@ from threading import Event
 from time import sleep
 import traceback
 
+from math import radians
 import config
 from flight import constants as c
 from drone import Drone
@@ -263,6 +264,11 @@ class DroneController(object):
             if (
                     self._drone.rangefinder.distance > config.MAXIMUM_ALLOWED_ALTITUDE):
                 raise exceptions.AltitudeExceededThreshold()
+            if abs(self._drone.attitude.roll) > radians(c.MAXIMUM_PITCH_ROLL):
+                raise exceptions.RollExceededMaximum()
+
+            if abs(self._drone.attitude.pitch) > radians(c.MAXIMUM_PITCH_ROLL):
+                raise exceptions.PitchExceededMaximum()
 
         except Exception as e:
             self._exception = e  # This variable only set when exception found
