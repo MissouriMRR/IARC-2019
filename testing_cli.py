@@ -133,12 +133,23 @@ class ExitCommand(Command):
         raise ExitRequested
 
 
+class YawCommand(Command):
+    def __init__(self, controller):
+        super(YawCommand, self).__init__(controller)
+        self._expected_order = [float, get_priority]
+        self._parameters = []
+
+    def __call__(self, *args):
+        self._controller.add_yaw_task(*self._parameters)
+
+
 NAME_TO_COMMAND = {
     'hover': HoverCommand,
     'move': MoveCommand,
     'takeoff': TakeoffCommand,
     'land': LandCommand,
-    'exit': ExitCommand
+    'exit': ExitCommand,
+    'yaw' : YawCommand
 }
 
 

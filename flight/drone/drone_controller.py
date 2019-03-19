@@ -17,7 +17,7 @@ import config
 from flight import constants as c
 from drone import Drone
 import exceptions
-from flight.tasks import Hover, Takeoff, LinearMovement, Land, Exit, TakeoffSim
+from flight.tasks import Hover, Takeoff, LinearMovement, Land, Exit, TakeoffSim, Yaw
 from flight.utils.priority_queue import PriorityQueue
 from flight.utils.timer import Timer
 from tools.data_distributor.data_splitter import DataSplitter
@@ -212,6 +212,18 @@ class DroneController(object):
         Always has high priority
         """
         new_task = Exit(self._drone)
+        self._task_queue.push(priority, new_task)
+    
+    def add_yaw_task(self, heading, priority=c.Priorities.MEDIUM):
+        """Instructs the drone to yaw.
+        Parameters
+        ----------
+        heading : int
+            The heading for the drone to go to.
+        priority : constants.Priorities
+            The priority of the yaw task
+        """
+        new_task = Yaw(self._drone, heading)
         self._task_queue.push(priority, new_task)
 
     def _update(self):

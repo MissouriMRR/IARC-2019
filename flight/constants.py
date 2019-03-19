@@ -124,5 +124,8 @@ OPTICAL_FLOW_MESSAGE = 'OPTICAL_FLOW'
 # altitude
 ACCEPTABLE_ALTITUDE_DEVIATION = 0.1
 
+# The speed at which the drone performs a yaw manuever
+YAW_SPEED = 0
+
 # Maximum roll and pitch (in degrees) before being considered unsafe
 MAXIMUM_PITCH_ROLL = 45
