@@ -31,10 +31,12 @@ class Hover(TaskBase):
         drone : dronekit.Vehicle
             The drone being controlled.
         altitude : float
-            Target altitude to maintain during hover.
+            Target altitude to maintain during hover. If none, automatically fills it with the current altitude
         duration : float
             How many seconds to hover for.
         """
+        if altitude == None:
+            altitude = self._drone.rangefinder.distance
         super(Hover, self).__init__(drone)
         self._duration = duration
         self._target_altitude = altitude
