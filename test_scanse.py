@@ -6,13 +6,14 @@ import time
 from timeit import default_timer as timer
 import threading
 
-from flight import Modes
+#from flight import Modes
 
 DETECTION_RANGE = 100 # in cm
-DEVICE = 'COM10'
+DEVICE = '/dev/ttyUSB0'
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
 REACT_DURATION = 0.2 # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
+SIGNAL_THRESHOLD = 170
 
 class Sectors(Enum):
     ONE = 1
@@ -55,6 +56,8 @@ class CollisionAvoidance(threading.Thread):
         opposite direction for a short duration.
         """
         with Sweep(DEVICE) as sweep:
+            sweep.set_motor_speed(6)
+            sweep.set_sample_rate(500)
             sweep.start_scanning()
 
             for scan in sweep.get_scans():
@@ -63,42 +66,45 @@ class CollisionAvoidance(threading.Thread):
                     return
                 for i in range(len(scan.samples)):
                     temp = scan.samples[i]
+                    if temp.signal_strength < SIGNAL_THRESHOLD:
+                        continue
+                    # ignore samples with distance one (they are faulty)
+                    if temp.distance == 1:
+                        continue
                     tempAngle = int(temp.angle/1000)
                     if tempAngle >= 0 and tempAngle < 45:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 1")
-                            self.react(Sectors.ONE)
+                            self.react(Sectors.ONE, temp)
                     elif tempAngle >= 45 and tempAngle < 90:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 2")
-                            self.react(Sectors.TWO)
+                            self.react(Sectors.TWO, temp)
                     elif tempAngle >= 90 and tempAngle < 135:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 3")
-                            self.react(Sectors.THREE)
+                            self.react(Sectors.THREE, temp)
                     elif tempAngle >= 135 and tempAngle < 180:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 4")
-                            self.react(Sectors.FOUR)
+                            self.react(Sectors.FOUR, temp)
                     elif tempAngle >= 180 and tempAngle < 225:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 5")
-                            self.react(Sectors.FIVE)
+                            self.react(Sectors.FIVE, temp)
                     elif tempAngle >= 225 and tempAngle < 270:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 6")
-                            self.react(Sectors.SIX)
+                            self.react(Sectors.SIX, temp)
                     elif tempAngle >= 270 and tempAngle < 315:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 7")
-                            self.react(Sectors.SEVEN)
+                            self.react(Sectors.SEVEN, temp)
                     elif tempAngle >= 315 and tempAngle < 360:
                         if temp.distance < DETECTION_RANGE:
                             self.logger.info("Collision detected - sector 8")
-                            self.react(Sectors.EIGHT)
-                    time.sleep(0.0001)
-            
-    def react(self, sector):
+                            self.react(Sectors.EIGHT, temp)
+    def react(self, sector, sample):
         """
         Reacts to an obstacle detected in this sector by travelling
         in the opposite direction for a short duration of time.
@@ -118,8 +124,9 @@ class CollisionAvoidance(threading.Thread):
             self.flight_session.current_task.stop()
             self.flight_session.current_task.join()
         """
+        print(sector, sample.distance, sample.signal_strength)
         start = timer()
-        duration = 1 # go in opposite direction for
+        duration = 0 # go in opposite direction for
         direction = react_direction[sector]
         x, y, z = direction
         while timer() - start < duration:
@@ -129,3 +136,4 @@ class CollisionAvoidance(threading.Thread):
         #self.flight_session.mode = Modes.NETWORK_CONTROLLED
 
 ca = CollisionAvoidance(None)
+ca.start()
