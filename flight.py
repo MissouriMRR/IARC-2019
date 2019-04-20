@@ -22,8 +22,8 @@ from input_thread import InputThread
 
 LOG_LEVEL = logging.INFO
 
-CONNECT_STRING = '127.0.0.1:14552'
-#CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
+#CONNECT_STRING = '127.0.0.1:14552'
+CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
 
 class Modes(Enum):
     NETWORK_CONTROLLED = 0
@@ -86,8 +86,7 @@ class FlightSession:
                 # Stop current command
                 if self.current_command:
                     self.current_command.stop_event.set()
-                    self.current_command.
-                    oin()
+                    self.current_command.join()
 
                 # Temporary - since no virtual lidar to test with
                 """
@@ -122,5 +121,5 @@ msg = drone.message_factory.command_long_encode(
 drone.send_mavlink(msg)
 
 fs = FlightSession(drone)
-fs.next_command = Takeoff(drone, 3)
+#fs.next_command = Takeoff(drone, 3)
 fs.loop()
