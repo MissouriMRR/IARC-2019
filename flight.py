@@ -13,7 +13,12 @@ import threading
 
 from commands import Move, Takeoff, Laser
 from drone import Drone
-from collision_avoidance import CollisionAvoidance
+
+# Temporary - since no virtual lidar to test with
+#from collision_avoidance import CollisionAvoidance
+
+# Temporary - for debugging purposes
+from input_thread import InputThread
 
 LOG_LEVEL = logging.INFO
 
@@ -35,8 +40,14 @@ class FlightSession:
         self.logger = logging.getLogger(__name__)
         self.mode = Modes.NETWORK_CONTROLLED
         self.drone = drone
-        self.avoidance_thread = CollisionAvoidance(self)
-        self.avoidance_thread.start()
+
+        # Temporary - since no virtual lidar to test with
+        #self.avoidance_thread = CollisionAvoidance(self)
+        #self.avoidance_thread.start()
+        
+        # Temporary - for debugging purposes
+        self.debug_loop = InputThread(self)
+        self.debug_loop.start()
 
     def loop(self):
         """
@@ -75,12 +86,22 @@ class FlightSession:
                 # Stop current command
                 if self.current_command:
                     self.current_command.stop_event.set()
-                    self.current_command.join()
+                    self.current_command.
+                    oin()
 
+                # Temporary - since no virtual lidar to test with
+                """
                 # Stop collision avoidance
                 if self.avoidance_thread:
                     self.avoidance_thread.stop_event.set()
                     self.avoidance_thread.join()
+                """
+
+                # Stop debug loop
+                if self.debug_loop:
+                    self.debug_loop.stop_event.set()
+                    self.debug_loop.join()
+
                 self.drone.land()
 
                 return
@@ -101,5 +122,5 @@ msg = drone.message_factory.command_long_encode(
 drone.send_mavlink(msg)
 
 fs = FlightSession(drone)
-fs.next_command = Takeoff(drone, 1)
+fs.next_command = Takeoff(drone, 3)
 fs.loop()

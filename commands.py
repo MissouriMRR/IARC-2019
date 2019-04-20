@@ -44,7 +44,7 @@ class Move(Command):
     """
     Causes a drone to move for a given number of seconds.
     """
-    def __init__(self, drone, id, north, east, down, seconds):
+    def __init__(self, drone, north, east, down, seconds):
         """
         Parameters:
         -----------
@@ -54,7 +54,7 @@ class Move(Command):
         down: negative z direction
         seconds: (float) number of seconds to fly in this direction
         """
-        super(Move, self).__init__(drone, id)
+        super(Move, self).__init__(drone)
         # The following four lines scale the movement vector so that it
         # retains its direction, but has a magnitude of the default
         # movement velocity.
@@ -73,11 +73,15 @@ class Move(Command):
         if not isinstance(self.drone, dronekit.Vehicle):
             self.logger.info("Cannot execute this move: drone variable never initialized.")
             return
+
         if not self.drone.armed:
             self.logger.info("Cannot execute this move: drone not armed.")
             return
+
         self.drone.doing_command = True
+
         self.logger.info("Drone {}: starting move".format(self.drone.id))
+
         start = timer()
         while timer() - start < self.duration:
             if self.stop_event.isSet():
@@ -86,6 +90,7 @@ class Move(Command):
                 return
             self.drone.send_velocity(self.north, self.east, self.down)
             time.sleep(1.0/MESSAGE_RESEND_RATE)
+
         # Movement finished, now stabalize drone in hover
         stabalize_duration = 0.2
         start = timer()
@@ -96,7 +101,9 @@ class Move(Command):
                 return
             self.drone.send_velocity(0, 0, 0)
             time.sleep(1.0/MESSAGE_RESEND_RATE)
+
         self.logger.info("Drone {}: finished move".format(self.drone.id))
+
         self.drone.doing_command = False
 
 class Takeoff(Command):
@@ -121,25 +128,35 @@ class Takeoff(Command):
         """
         if not isinstance(self.drone, dronekit.Vehicle):
             self.logger.info("Cannot execute this move: drone variable never initialized.")
+
         self.drone.doing_command = True
+
         self.logger.info("Drone {}: starting takeoff".format(self.drone.id))
+
         self.drone.arm()
+
         # Take off drone
         self.drone.simple_takeoff(self.alt_target)
+        import inspect
+        
         # While not within 0.25 of a meter
+        #self.drone.location.global_relative_frame.alt
         while abs(self.drone.rangefinder.distance - self.alt_target) > 0.25:
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
                 self.drone.send_velocity(0, 0, 0)
                 return
             time.sleep(0.001)
+        
         # Hover for a short duration to stablize the drone
         start = timer()
         stabalize_duration = 0.2
         while timer() - start < stabalize_duration:
             self.drone.send_velocity(0, 0, 0) # Hover
             time.sleep(1.0/MESSAGE_RESEND_RATE)
+        
         self.logger.info("Drone {}: finished takeoff".format(self.drone.id))
+
         self.drone.doing_command = False
 
 class Laser(Command):
@@ -167,8 +184,11 @@ class Laser(Command):
         to its original heading.
         """
         self.drone.doing_command = True
+
         self.logger.info("Drone {}: starting heal".format(self.drone.id))
+
         cw = True # Start by moving clock-wise
+
         start = timer()
         while timer() - start < self.duration:
             if self.stop_event.isSet():

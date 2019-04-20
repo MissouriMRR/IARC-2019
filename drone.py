@@ -85,6 +85,21 @@ class Drone(Vehicle):
         msg = self._make_velocity_message(north, east, down)
         self.send_mavlink(msg)
 
+    def send_rel_pos(self, north, east, down):
+        """Send position drone should travel in.
+        Parameters
+        ----------
+        north : float
+        east : float
+        down : float
+        Notes
+        -----
+        This method used the NED coordinate system. Of note is that sending a
+        positive value for down will make the drone lose altitude.
+        """
+        msg = self._make_relative_move_message(north, east, down)
+        self.send_mavlink(msg)
+
     def send_yaw(self, heading, direction):
         """Send yaw to the drone.
         Parameters
@@ -151,6 +166,34 @@ class Drone(Vehicle):
             north, # X velocity in NED frame in m/s
             east, # Y velocity in NED frame in m/s
             down, # Z velocity in NED frame in m/s
+            0, 0, 0, # afx, afy, afz acceleration (not supported yet, ignored in GCS_Mavlink)
+            0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
+
+    def _make_relative_move_message(self, north, east, down):
+        """Construct a mavlink message for sending velocity.
+        Parameters
+        ----------
+        north : float
+        east : float
+        down : float
+        Returns
+        -------
+        MAVLink_message (a DroneKit object)
+            Message which moves the drone at a certain velocity.
+        see http://python.dronekit.io/examples/guided-set-speed-yaw-demo.html#send-global-velocity
+        """
+        return self.message_factory.set_position_target_local_ned_encode(
+            0,       # time_boot_ms (not used)
+            0, 0,    # target system, target component
+            mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
+            0b0000111111111000, # type_mask (only speeds enabled)
+            north, # lat_int - X Position in WGS84 frame in 1e7 * meters
+            east, # lon_int - Y Position in WGS84 frame in 1e7 * meters
+            down, # alt - Altitude in meters in AMSL altitude(not WGS84 if absolute or relative)
+            # altitude above terrain if GLOBAL_TERRAIN_ALT_INT
+            0, # X velocity in NED frame in m/s
+            0, # Y velocity in NED frame in m/s
+            0, # Z velocity in NED frame in m/s
             0, 0, 0, # afx, afy, afz acceleration (not supported yet, ignored in GCS_Mavlink)
             0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 
