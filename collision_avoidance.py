@@ -10,8 +10,8 @@ from modes import Modes
 #from flight import Modes
 
 DETECTION_RANGE = 100 # in cm
-#DEVICE = '/dev/ttyUSB0' # linux style
-DEVICE = 'COM5' # windows style
+DEVICE = '/dev/ttyUSB0' # linux style
+#DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
 REACT_DURATION = 0.2 # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
@@ -42,23 +42,24 @@ react_direction = {
 class CollisionAvoidance(threading.Thread):
     """
     Responsible for taking contorl of the drone when an obstacle is
-    encountered. It will move the drone a short distance in the opposing 
+    encountered. It will move the drone a short distance in the opposing
     direciton of the obstacle.
     """
     def __init__(self, flight_session):
         super(CollisionAvoidance, self).__init__()
         self.flight_session = flight_session
+        print(flight_session)
         self.stop_event = threading.Event()
         self.logger = logging.getLogger(__name__)
 
     def run(self):
-        """ 
+        """
         Constantly checks for obstacles in any one of the eight sectors.
-        If an obstacle is detected, the drone will try to move in the 
+        If an obstacle is detected, the drone will try to move in the
         opposite direction for a short duration.
         """
         with Sweep(DEVICE) as sweep:
-            sweep.set_motor_speed(6)
+            #sweep.set_motor_speed(6)
             sweep.set_sample_rate(100)
             sweep.start_scanning()
 
@@ -108,17 +109,17 @@ class CollisionAvoidance(threading.Thread):
         -----------
         sector (enum): the sector that an obstacle has been detected in.
         """
-        
+
         drone = self.flight_session.drone
         if not drone.armed:
             #return # do not try to react if not flying
             pass
-    
+
         self.flight_session.mode = Modes.OBSTACLE_AVOIDANCE
-        if self.flight_session.current_task is not None:
-            self.flight_session.current_task.stop()
-            self.flight_session.current_task.join()
-        
+        if self.flight_session.current_command and self.flight_session.current_command:
+            self.flight_session.current_command.stop()
+            self.flight_session.current_command.join()
+
         start = timer()
         duration = 0.2 # go in opposite direction for
         direction = react_direction[sector]
@@ -129,5 +130,3 @@ class CollisionAvoidance(threading.Thread):
             time.sleep(1.0/MESSAGE_RESEND_RATE)
         self.flight_session.mode = Modes.NETWORK_CONTROLLED
 
-ca = CollisionAvoidance(None)
-ca.start()

@@ -40,12 +40,11 @@ class FlightSession:
         self.mode = Modes.NETWORK_CONTROLLED
         self.drone = drone
 
-        self.avoidance_thread = CollisionAvoidance(self)
-        self.avoidance_thread.start()
-        
+        self.avoidance_thread = CollisionAvoidance(flight_session=self)
+
         # Temporary - for debugging purposes
         self.debug_loop = InputThread(self)
-        self.debug_loop.start()
+
 
     def loop(self):
         """
@@ -53,11 +52,14 @@ class FlightSession:
         be customized to contain the desired behavior of the drones and
         check for the arrival of network messages from the tablet.
         """
+
         # Make sure drone is initialized before attempting commands
-        print(type(dronekit.Vehicle))
         if not isinstance(self.drone, dronekit.Vehicle):
             self.logger.info("Drone not yet initialized - failed to enter main loop")
-        
+
+        self.avoidance_thread.start()
+        self.debug_loop.start()
+
         while True:
             try:
                 # TODO: Check for network messages that have arrived, add them to commands
