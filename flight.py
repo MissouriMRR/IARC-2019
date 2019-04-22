@@ -1,9 +1,9 @@
 """
-Central flight controller code meant to be run on a singular, 'hivemind',
-ground control station.
+Central flight controller code meant to be run on a single drone. Takes
+messages sent over the network and translates them into commands that the
+drone is given.
 """
 
-from enum import Enum
 import dronekit
 from pymavlink import mavutil
 import logging
@@ -13,21 +13,20 @@ import threading
 
 from commands import Move, Takeoff, Laser
 from drone import Drone
+from modes import Modes
 
 # Temporary - since no virtual lidar to test with
-#from collision_avoidance import CollisionAvoidance
+from collision_avoidance import CollisionAvoidance
 
 # Temporary - for debugging purposes
 from input_thread import InputThread
 
 LOG_LEVEL = logging.INFO
 
-#CONNECT_STRING = '127.0.0.1:14552'
-CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
+CONNECT_STRING = '127.0.0.1:14552'
+#CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
 
-class Modes(Enum):
-    NETWORK_CONTROLLED = 0
-    OBSTACLE_AVOIDANCE = 1
+
 
 class FlightSession:
     """
@@ -41,9 +40,8 @@ class FlightSession:
         self.mode = Modes.NETWORK_CONTROLLED
         self.drone = drone
 
-        # Temporary - since no virtual lidar to test with
-        #self.avoidance_thread = CollisionAvoidance(self)
-        #self.avoidance_thread.start()
+        self.avoidance_thread = CollisionAvoidance(self)
+        self.avoidance_thread.start()
         
         # Temporary - for debugging purposes
         self.debug_loop = InputThread(self)
@@ -88,13 +86,10 @@ class FlightSession:
                     self.current_command.stop_event.set()
                     self.current_command.join()
 
-                # Temporary - since no virtual lidar to test with
-                """
                 # Stop collision avoidance
                 if self.avoidance_thread:
                     self.avoidance_thread.stop_event.set()
                     self.avoidance_thread.join()
-                """
 
                 # Stop debug loop
                 if self.debug_loop:

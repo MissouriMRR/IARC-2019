@@ -5,11 +5,13 @@ from sweeppy import Sweep
 import time
 from timeit import default_timer as timer
 import threading
+from modes import Modes
 
 #from flight import Modes
 
 DETECTION_RANGE = 100 # in cm
-DEVICE = '/dev/ttyUSB0'
+#DEVICE = '/dev/ttyUSB0' # linux style
+DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
 REACT_DURATION = 0.2 # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
