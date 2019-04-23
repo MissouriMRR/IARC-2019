@@ -55,7 +55,6 @@ class Drone(Vehicle):
 
     def __init__(self, *args):
         super(Drone, self).__init__(*args)
-        print(args)
         self._id = 1
         self.doing_command = False
         self._logger = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ class Drone(Vehicle):
         """Set the drone's id."""
         self._id = identifier
 
-    def send_velocity(self, north, east, down):
+    def send_velocity(self, north=0, east=0, down=0):
         """Send velocity to the drone.
         Parameters
         ----------
@@ -130,6 +129,7 @@ class Drone(Vehicle):
         self._logger.info('Drone {}: Arming...'.format(self.id))
         while not self.armed:
             self.armed = True
+            print("trying to arm")
             time.sleep(ARM_RETRY_DELAY)
 
         if self.armed:
@@ -139,7 +139,8 @@ class Drone(Vehicle):
 
     def land(self):
         while self.mode != LAND:
-            self.mode = LAND
+            print("trying to land")
+            self.mode = VehicleMode(LAND)
 
     def _make_velocity_message(self, north, east, down):
         """Construct a mavlink message for sending velocity.

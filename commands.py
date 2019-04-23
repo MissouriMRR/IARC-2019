@@ -28,7 +28,6 @@ class Command(threading.Thread):
         self.time = time.time() # timestamp for creation of this command
         self.drone = drone
         self.logger = logging.getLogger(__name__)
-        coloredlogs.install(LOG_LEVEL)
         self.stop_event = threading.Event()
 
     def stop(self):
@@ -138,7 +137,7 @@ class Takeoff(Command):
         # Take off drone
         self.drone.simple_takeoff(self.alt_target)
         import inspect
-        
+
         # While not within 0.25 of a meter
         #self.drone.location.global_relative_frame.alt
         while abs(self.drone.rangefinder.distance - self.alt_target) > 0.25:
@@ -147,21 +146,21 @@ class Takeoff(Command):
                 self.drone.send_velocity(0, 0, 0)
                 return
             time.sleep(0.001)
-        
+
         # Hover for a short duration to stablize the drone
         start = timer()
         stabalize_duration = 0.2
         while timer() - start < stabalize_duration:
             self.drone.send_velocity(0, 0, 0) # Hover
             time.sleep(1.0/MESSAGE_RESEND_RATE)
-        
+
         self.logger.info("Drone {}: finished takeoff".format(self.drone.id))
 
         self.drone.doing_command = False
 
 class Laser(Command):
     """
-    Causes the laser to turn on and the drone to yaw back and forth to that 
+    Causes the laser to turn on and the drone to yaw back and forth to that
     the laser has a better chance of hitting the human.
     """
     def __init__(self, drone, range=20, duration=5):

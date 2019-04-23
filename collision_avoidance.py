@@ -9,13 +9,14 @@ from modes import Modes
 
 #from flight import Modes
 
-DETECTION_RANGE = 100 # in cm
+DISTANCE_THRESHOLD = 30 # in cm
 DEVICE = '/dev/ttyUSB0' # linux style
 #DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
-REACT_DURATION = 0.2 # go in opposite direction for this many seconds
+REACT_DURATION = 0.5 # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
-SIGNAL_THRESHOLD = 170
+SIGNAL_THRESHOLD = 50
+SECTOR_ANGLE = 360/8 # how many degrees each sector covers
 
 class Sectors(Enum):
     ONE = 1
@@ -48,9 +49,41 @@ class CollisionAvoidance(threading.Thread):
     def __init__(self, flight_session):
         super(CollisionAvoidance, self).__init__()
         self.flight_session = flight_session
-        print(flight_session)
         self.stop_event = threading.Event()
         self.logger = logging.getLogger(__name__)
+
+    DoingReaction = False # static variable
+
+    class Reaction(threading.Thread):
+        """
+        Represents the drone's response to a detected obstacle.
+        """
+        def __init__(self, sector, flight_session):
+            super(CollisionAvoidance.Reaction, self).__init__()
+            self.sector = sector
+            self.fs = flight_session
+
+        def run(self):
+            """
+            Moves the drone in the opposite direction of the obstacle.
+            """
+            drone = self.fs.drone
+            direction = react_direction[self.sector]
+            x, y, z = direction
+            # move in opposite direction
+            start = timer()
+            while timer() - start < REACT_DURATION:
+                drone.send_velocity(x, y, z)
+                time.sleep(1.0/MESSAGE_RESEND_RATE)
+
+            # stabalize movement with a short hover
+            start = timer()
+            while timer() - start < 0.2:
+                drone.send_velocity()
+                time.sleep(1.0/MESSAGE_RESEND_RATE)
+
+            CollisionAvoidance.DoingReaction = False
+            self.fs.mode = Modes.NETWORK_CONTROLLED
 
     def run(self):
         """
@@ -58,49 +91,58 @@ class CollisionAvoidance(threading.Thread):
         If an obstacle is detected, the drone will try to move in the
         opposite direction for a short duration.
         """
+        self.logger.info("Trying to start lidar sample collection...")
         with Sweep(DEVICE) as sweep:
-            #sweep.set_motor_speed(6)
+            sweep.set_motor_speed(6)
             sweep.set_sample_rate(100)
             sweep.start_scanning()
-
+            self.logger.info("Lidar has begun giving samples")
             for scan in sweep.get_scans():
+
+                # check if flight controller has said to stop
                 if self.stop_event.is_set():
+                    self.logger.info("trying to stop scanning...")
                     sweep.stop_scanning()
                     return
-                for temp in scan.samples:
-                    if temp.signal_strength < SIGNAL_THRESHOLD:
+                # look through lidar samples
+                sorted_samples = sorted(scan.samples, key=lambda s : s.signal_strength, reverse=True)
+                for sample in sorted_samples:
+                    # check that the no reaction is currently happening and
+                    # that the sample is worthy of being acted upon
+                    if (CollisionAvoidance.DoingReaction
+                            or not self.meets_requirements(sample)):
                         continue
-                    # ignore samples with distance one (they are faulty)
-                    if temp.distance == 1 or temp.distance > DETECTION_RANGE:
-                        continue
-                    print(temp.distance, temp.signal_strength)
-                    tempAngle = int(temp.angle/1000)
-                    if tempAngle >= 0 and tempAngle < 45:
-                        self.logger.info("Collision detected - sector 1")
-                        self.react(Sectors.ONE, temp)
-                    elif tempAngle >= 45 and tempAngle < 90:
-                        self.logger.info("Collision detected - sector 2")
-                        self.react(Sectors.TWO, temp)
-                    elif tempAngle >= 90 and tempAngle < 135:
-                        self.logger.info("Collision detected - sector 3")
-                        self.react(Sectors.THREE, temp)
-                    elif tempAngle >= 135 and tempAngle < 180:
-                        self.logger.info("Collision detected - sector 4")
-                        self.react(Sectors.FOUR, temp)
-                    elif tempAngle >= 180 and tempAngle < 225:
-                        self.logger.info("Collision detected - sector 5")
-                        self.react(Sectors.FIVE, temp)
-                    elif tempAngle >= 225 and tempAngle < 270:
-                        self.logger.info("Collision detected - sector 6")
-                        self.react(Sectors.SIX, temp)
-                    elif tempAngle >= 270 and tempAngle < 315:
-                        self.logger.info("Collision detected - sector 7")
-                        self.react(Sectors.SEVEN, temp)
-                    elif tempAngle >= 315 and tempAngle < 360:
-                        self.logger.info("Collision detected - sector 8")
-                        self.react(Sectors.EIGHT, temp)
-                    break
-    def react(self, sector, sample):
+                    s_angle = int(sample.angle/1000)
+
+                    count = 1
+                    print(s_angle)
+                    for sector in Sectors:
+                        if (count-1) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
+                            self.log_collision(sector, sample)
+                            self.react(sector)
+                            break
+                        count += 1
+
+    def log_collision(self, sector, sample):
+        msg = ("Collision detected - {} (distance - {}, confidence - {})"
+            .format(sector, sample.distance, sample.signal_strength))
+        self.logger.info(msg)
+
+    def meets_requirements(self, sample):
+        """
+        Checks that a number of conditions are met before recognizing
+        that this sample is worthy of being acted upon.
+
+        If the sample is worth acting upon, returns True (False otherwise).
+        """
+        ans = (sample.signal_strength >= SIGNAL_THRESHOLD
+            and sample.distance != 1
+            and sample.distance <= DISTANCE_THRESHOLD)
+        return (sample.signal_strength >= SIGNAL_THRESHOLD
+            and sample.distance != 1
+            and sample.distance <= DISTANCE_THRESHOLD)
+
+    def react(self, sector):
         """
         Reacts to an obstacle detected in this sector by travelling
         in the opposite direction for a short duration of time.
@@ -109,24 +151,15 @@ class CollisionAvoidance(threading.Thread):
         -----------
         sector (enum): the sector that an obstacle has been detected in.
         """
-
-        drone = self.flight_session.drone
-        if not drone.armed:
-            #return # do not try to react if not flying
-            pass
+        if not self.flight_session.drone.armed:
+            return
 
         self.flight_session.mode = Modes.OBSTACLE_AVOIDANCE
-        if self.flight_session.current_command and self.flight_session.current_command:
+        CollisionAvoidance.DoingReaction = True
+
+        if self.flight_session.current_command is not None:
             self.flight_session.current_command.stop()
             self.flight_session.current_command.join()
 
-        start = timer()
-        duration = 0.2 # go in opposite direction for
-        direction = react_direction[sector]
-        x, y, z = direction
-        while timer() - start < duration:
-            #drone.send_velocity(x, y, z)
-            self.logger.info("Trying to move drone - {}, {}, {}".format(x, y, z))
-            time.sleep(1.0/MESSAGE_RESEND_RATE)
-        self.flight_session.mode = Modes.NETWORK_CONTROLLED
+        self.Reaction(sector, self.flight_session).start()
 

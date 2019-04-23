@@ -34,6 +34,7 @@ class FlightSession:
     vehicles and commands.
     """
     def __init__(self, drone):
+        coloredlogs.install(LOG_LEVEL)
         self.current_command = None # hold the current command the drone is doing
         self.next_command = None # holds the next command for the drone to do
         self.logger = logging.getLogger(__name__)
@@ -85,16 +86,19 @@ class FlightSession:
                 print("Ctrl-C pressed. Landing the drones and shutting down.")
                 # Stop current command
                 if self.current_command:
+                    self.logger.info("Stopping current command...")
                     self.current_command.stop_event.set()
                     self.current_command.join()
 
                 # Stop collision avoidance
                 if self.avoidance_thread:
+                    self.logger.info("Stopping collision avoidance...")
                     self.avoidance_thread.stop_event.set()
                     self.avoidance_thread.join()
 
                 # Stop debug loop
                 if self.debug_loop:
+                    self.logger.info("Stopping debug loop...")
                     self.debug_loop.stop_event.set()
                     self.debug_loop.join()
 
