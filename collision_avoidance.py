@@ -31,12 +31,12 @@ class Sectors(Enum):
 # FILL THESE VALUE IN LATER
 react_direction = {
     Sectors.ONE:       (-1, 0, 0),
-    Sectors.TWO:       (0, -1, 0),
-    Sectors.THREE:     (0, -1, 0),
+    Sectors.TWO:       (0, 1, 0),
+    Sectors.THREE:     (0, 1, 0),
     Sectors.FOUR:      (1, 0, 0),
     Sectors.FIVE:      (1, 0, 0),
-    Sectors.SIX:       (0, 1, 0),
-    Sectors.SEVEN:     (0, 1, 0),
+    Sectors.SIX:       (0, -1, 0),
+    Sectors.SEVEN:     (0, -1, 0),
     Sectors.EIGHT:     (-1, 0, 0),
 }
 
