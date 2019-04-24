@@ -6,14 +6,15 @@ import time
 from timeit import default_timer as timer
 import threading
 from modes import Modes
+from math import sin, cos, pi
 
 #from flight import Modes
 
-DISTANCE_THRESHOLD = 100 # in cm
+DISTANCE_THRESHOLD = 10 # in cm
 DEVICE = '/dev/ttyUSB0' # linux style
 #DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
-REACT_DURATION = 0.5 # go in opposite direction for this many seconds
+REACT_DURATION = 1.0 # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
 SIGNAL_THRESHOLD = 100
 SECTOR_ANGLE = 360/8 # how many degrees each sector covers
@@ -28,16 +29,16 @@ class Sectors(Enum):
     SEVEN = 7
     EIGHT = 8
 
-# FILL THESE VALUE IN LATER
+# These should all be unit vectors in the appropriate opposite direction
 react_direction = {
-    Sectors.ONE:       (-1, 0, 0),
-    Sectors.TWO:       (0, 1, 0),
-    Sectors.THREE:     (0, 1, 0),
-    Sectors.FOUR:      (1, 0, 0),
-    Sectors.FIVE:      (1, 0, 0),
-    Sectors.SIX:       (0, -1, 0),
-    Sectors.SEVEN:     (0, -1, 0),
-    Sectors.EIGHT:     (-1, 0, 0),
+    Sectors.ONE:       (sin(-pi/8), cos(-pi/8), 0),
+    Sectors.TWO:       (sin(-3*pi/8), cos(-3*pi/8), 0),
+    Sectors.THREE:     (sin(-5*pi/8), cos(-5*pi/8), 0),
+    Sectors.FOUR:      (sin(-7*pi/8), cos(-7*pi/8), 0),
+    Sectors.FIVE:      (sin(7*pi/8), cos(7*pi/8), 0),
+    Sectors.SIX:       (sin(5*pi/8), cos(5*pi/8), 0),
+    Sectors.SEVEN:     (sin(3*pi/8), cos(3*pi/8), 0),
+    Sectors.EIGHT:     (sin(pi/8), cos(pi/8), 0)
 }
 
 class CollisionAvoidance(threading.Thread):
@@ -69,18 +70,19 @@ class CollisionAvoidance(threading.Thread):
             """
             drone = self.fs.drone
             direction = react_direction[self.sector]
-            x, y, z = direction
+            n, e, d = direction
+            print(n, e, d)
             # move in opposite direction
+            drone.send_rel_pos(n, e, d)
             start = timer()
             while timer() - start < REACT_DURATION:
-                drone.send_rel_pos(x, y, z)
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
             # stabilize movement with a short hover
             HOVER_DURATION = 0.5
             start = timer()
             while timer() - start < HOVER_DURATION:
-                drone.send_rel_pos()
+                drone.send_velocity()
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
             CollisionAvoidance.DoingReaction = False

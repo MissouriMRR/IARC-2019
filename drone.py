@@ -129,7 +129,6 @@ class Drone(Vehicle):
         self._logger.info('Drone {}: Arming...'.format(self.id))
         while not self.armed:
             self.armed = True
-            print("trying to arm")
             time.sleep(ARM_RETRY_DELAY)
 
         if self.armed:
@@ -138,9 +137,10 @@ class Drone(Vehicle):
             self._logger.error('Drone {}: Failed to arm'.format(self.id))
 
     def land(self):
+        self._logger.info('Drone {}: Trying to land...'.format(self.id))
         while self.mode != LAND:
-            print("trying to land")
             self.mode = VehicleMode(LAND)
+        self._logger.info('Drone {}: land mode achieved'.format(self.id))
 
     def _make_velocity_message(self, north, east, down):
         """Construct a mavlink message for sending velocity.
@@ -192,9 +192,7 @@ class Drone(Vehicle):
             east, # lon_int - Y Position in WGS84 frame in 1e7 * meters
             down, # alt - Altitude in meters in AMSL altitude(not WGS84 if absolute or relative)
             # altitude above terrain if GLOBAL_TERRAIN_ALT_INT
-            0, # X velocity in NED frame in m/s
-            0, # Y velocity in NED frame in m/s
-            0, # Z velocity in NED frame in m/s
+            0, 0, 0, # x, y, z velocity in m/s
             0, 0, 0, # afx, afy, afz acceleration (not supported yet, ignored in GCS_Mavlink)
             0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 

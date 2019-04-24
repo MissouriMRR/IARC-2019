@@ -96,13 +96,13 @@ class FlightSession:
                     self.avoidance_thread.stop_event.set()
                     self.avoidance_thread.join()
 
+                self.drone.land()
+
                 # Stop debug loop
                 if self.debug_loop:
                     self.logger.info("Stopping debug loop...")
                     self.debug_loop.stop_event.set()
                     self.debug_loop.join()
-
-                self.drone.land()
 
                 return
 

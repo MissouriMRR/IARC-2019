@@ -11,7 +11,7 @@ from timeit import default_timer as timer
 
 VELOCITY = 0.5 # drone will move at this rate in m/s
 TAKEOFF_ALT = 1 # drone will take off to this altitude (m)
-MESSAGE_RESEND_RATE = 30.0
+MESSAGE_RESEND_RATE = 30
 LOG_LEVEL = logging.INFO
 
 class Command(threading.Thread):
@@ -52,6 +52,10 @@ class Move(Command):
         east: y direction (I think?)
         down: negative z direction
         seconds: (float) number of seconds to fly in this direction
+        Notes:
+        ------
+        No matter what (north, east, down) is given, drone will travel in
+        that unit direction for the specified number of seconds.
         """
         super(Move, self).__init__(drone)
         # The following four lines scale the movement vector so that it
@@ -61,6 +65,7 @@ class Move(Command):
         self.north = VELOCITY*north/mag
         self.east = VELOCITY*east/mag
         self.down = VELOCITY*down/mag
+
 
         self.duration = seconds
 
@@ -81,14 +86,20 @@ class Move(Command):
 
         self.logger.info("Drone {}: starting move".format(self.drone.id))
 
+
+        self.drone.send_yaw(0, 1) # heading, direction (cw)
+
         start = timer()
         while timer() - start < self.duration:
-            if self.stop_event.isSet():
-                # Send a stablizing command to drone
-                self.drone.send_velocity(0, 0, 0)
-                return
-            self.drone.send_velocity(self.north, self.east, self.down)
-            time.sleep(1.0/MESSAGE_RESEND_RATE)
+            self.logger.info("Drone {}: starting move interval".format(self.drone.id))
+            self.drone.send_rel_pos(self.north, self.east, self.down)
+            start_interval = timer()
+            while timer() - start_interval < 1.0: # 1 second intervals
+                if self.stop_event.isSet():
+                    # Send a stablizing command to drone
+                    self.drone.send_rel_pos(0, 0, 0)
+                    return
+                time.sleep(1.0/MESSAGE_RESEND_RATE)
 
         # Movement finished, now stabalize drone in hover
         stabalize_duration = 0.2
@@ -96,8 +107,9 @@ class Move(Command):
         while timer() - start < stabalize_duration:
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
-                self.drone.send_velocity(0, 0, 0)
+                self.drone.send_rel_pos(0, 0, 0)
                 return
+            print("1")
             self.drone.send_velocity(0, 0, 0)
             time.sleep(1.0/MESSAGE_RESEND_RATE)
 
@@ -143,7 +155,7 @@ class Takeoff(Command):
         while abs(self.drone.rangefinder.distance - self.alt_target) > 0.25:
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
-                self.drone.send_velocity(0, 0, 0)
+                self.drone.send_rel_pos(0, 0, 0)
                 return
             time.sleep(0.001)
 
@@ -151,7 +163,7 @@ class Takeoff(Command):
         start = timer()
         stabalize_duration = 0.2
         while timer() - start < stabalize_duration:
-            self.drone.send_velocity(0, 0, 0) # Hover
+            self.drone.send_rel_pos(0, 0, 0) # Hover
             time.sleep(1.0/MESSAGE_RESEND_RATE)
 
         self.logger.info("Drone {}: finished takeoff".format(self.drone.id))
