@@ -9,13 +9,13 @@ from modes import Modes
 
 #from flight import Modes
 
-DISTANCE_THRESHOLD = 30 # in cm
+DISTANCE_THRESHOLD = 100 # in cm
 DEVICE = '/dev/ttyUSB0' # linux style
 #DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
 REACT_DURATION = 0.5 # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
-SIGNAL_THRESHOLD = 50
+SIGNAL_THRESHOLD = 100
 SECTOR_ANGLE = 360/8 # how many degrees each sector covers
 
 class Sectors(Enum):
@@ -77,8 +77,9 @@ class CollisionAvoidance(threading.Thread):
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
             # stabilize movement with a short hover
+            HOVER_DURATION = 0.5
             start = timer()
-            while timer() - start < 0.2:
+            while timer() - start < HOVER_DURATION:
                 drone.send_rel_pos()
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
@@ -135,9 +136,6 @@ class CollisionAvoidance(threading.Thread):
 
         If the sample is worth acting upon, returns True (False otherwise).
         """
-        ans = (sample.signal_strength >= SIGNAL_THRESHOLD
-            and sample.distance != 1
-            and sample.distance <= DISTANCE_THRESHOLD)
         return (sample.signal_strength >= SIGNAL_THRESHOLD
             and sample.distance != 1
             and sample.distance <= DISTANCE_THRESHOLD)
