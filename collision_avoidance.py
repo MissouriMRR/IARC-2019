@@ -73,13 +73,13 @@ class CollisionAvoidance(threading.Thread):
             # move in opposite direction
             start = timer()
             while timer() - start < REACT_DURATION:
-                drone.send_velocity(x, y, z)
+                drone.send_rel_pos(x, y, z)
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
-            # stabalize movement with a short hover
+            # stabilize movement with a short hover
             start = timer()
             while timer() - start < 0.2:
-                drone.send_velocity()
+                drone.send_rel_pos()
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
             CollisionAvoidance.DoingReaction = False

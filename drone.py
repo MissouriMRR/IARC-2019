@@ -84,7 +84,7 @@ class Drone(Vehicle):
         msg = self._make_velocity_message(north, east, down)
         self.send_mavlink(msg)
 
-    def send_rel_pos(self, north, east, down):
+    def send_rel_pos(self, north=0, east=0, down=0):
         """Send position drone should travel in.
         Parameters
         ----------
