@@ -1,23 +1,25 @@
-from enum import Enum
 import logging
-import coloredlogs
-from sweeppy import Sweep
-import time
-from timeit import default_timer as timer
 import threading
+import time
+from enum import Enum
+from math import cos, pi, sin
+from timeit import default_timer as timer
+
+import coloredlogs
 from modes import Modes
-from math import sin, cos, pi
+from sweeppy import Sweep
 
 #from flight import Modes
 
-DISTANCE_THRESHOLD = 100 # in cm
-DEVICE = '/dev/ttyUSB0' # linux style
+DISTANCE_THRESHOLD = 100  # in cm
+DEVICE = '/dev/ttyUSB0'  # linux style
 #DEVICE = 'COM5' # windows style
-MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
-REACT_DURATION = 1.0 # go in opposite direction for this many seconds
+MESSAGE_RESEND_RATE = 30.0  # resend movement instruction at this HZ
+REACT_DURATION = 1.0  # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
 SIGNAL_THRESHOLD = 100
-SECTOR_ANGLE = 360/8 # how many degrees each sector covers
+SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
+
 
 class Sectors(Enum):
     ONE = 1
@@ -29,17 +31,35 @@ class Sectors(Enum):
     SEVEN = 7
     EIGHT = 8
 
+
+def anglify(sector):
+    offset = -3 - (sector.value - 1) * 2
+    return (cos(offset * pi / 8), sin(offset * pi / 8), 0)
+
+
 # These should all be unit vectors in the appropriate opposite direction
 react_direction = {
-    Sectors.ONE:       (sin(-pi/8), cos(-pi/8), 0),
-    Sectors.TWO:       (sin(-3*pi/8), cos(-3*pi/8), 0),
-    Sectors.THREE:     (sin(-5*pi/8), cos(-5*pi/8), 0),
-    Sectors.FOUR:      (sin(-7*pi/8), cos(-7*pi/8), 0),
-    Sectors.FIVE:      (sin(7*pi/8), cos(7*pi/8), 0),
-    Sectors.SIX:       (sin(5*pi/8), cos(5*pi/8), 0),
-    Sectors.SEVEN:     (sin(3*pi/8), cos(3*pi/8), 0),
-    Sectors.EIGHT:     (sin(pi/8), cos(pi/8), 0)
+    Sectors.ONE: anglify(Sectors.ONE),
+    Sectors.TWO: anglify(Sectors.TWO),
+    Sectors.THREE: anglify(Sectors.THREE),
+    Sectors.FOUR: anglify(Sectors.FOUR),
+    Sectors.FIVE: anglify(Sectors.FIVE),
+    Sectors.SIX: anglify(Sectors.SIX),
+    Sectors.SEVEN: anglify(Sectors.SEVEN),
+    Sectors.EIGHT: anglify(Sectors.EIGHT),
+"""
+react_direction = {
+    Sectors.ONE: (sin(-3 * pi / 8), cos(-3 * pi / 8), 0),
+    Sectors.TWO: (sin(-5 * pi / 8), cos(-5 * pi / 8), 0),
+    Sectors.THREE: (sin(-7 * pi / 8), cos(-7 * pi / 8), 0),
+    Sectors.FOUR: (sin(-9 * pi / 8), cos(-9 * pi / 8), 0),
+    Sectors.FIVE: (sin(-11 * pi / 8), cos(-11 * pi / 8), 0),
+    Sectors.SIX: (sin(-13 * pi / 8), cos(-13 * pi / 8), 0),
+    Sectors.SEVEN: (sin(-15 * pi / 8), cos(-15 * pi / 8), 0),
+    Sectors.EIGHT: (sin(-17 * pi / 8), cos(-17 * pi / 8), 0)
 }
+"""
+
 
 class CollisionAvoidance(threading.Thread):
     """
@@ -47,18 +67,20 @@ class CollisionAvoidance(threading.Thread):
     encountered. It will move the drone a short distance in the opposing
     direciton of the obstacle.
     """
+
     def __init__(self, flight_session):
         super(CollisionAvoidance, self).__init__()
         self.flight_session = flight_session
         self.stop_event = threading.Event()
         self.logger = logging.getLogger(__name__)
 
-    DoingReaction = False # static variable
+    DoingReaction = False  # static variable
 
     class Reaction(threading.Thread):
         """
         Represents the drone's response to a detected obstacle.
         """
+
         def __init__(self, sector, flight_session):
             super(CollisionAvoidance.Reaction, self).__init__()
             self.sector = sector
@@ -76,14 +98,14 @@ class CollisionAvoidance(threading.Thread):
             drone.send_rel_pos(n, e, d)
             start = timer()
             while timer() - start < REACT_DURATION:
-                time.sleep(1.0/MESSAGE_RESEND_RATE)
+                time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
             # stabilize movement with a short hover
             HOVER_DURATION = 0.5
             start = timer()
             while timer() - start < HOVER_DURATION:
                 drone.send_velocity()
-                time.sleep(1.0/MESSAGE_RESEND_RATE)
+                time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
             CollisionAvoidance.DoingReaction = False
             self.fs.mode = Modes.NETWORK_CONTROLLED
@@ -108,19 +130,24 @@ class CollisionAvoidance(threading.Thread):
                     sweep.stop_scanning()
                     return
                 # look through lidar samples
-                sorted_samples = sorted(scan.samples, key=lambda s : s.signal_strength, reverse=True)
+                sorted_samples = sorted(
+                    scan.samples,
+                    key=lambda s: s.signal_strength,
+                    reverse=True)
                 for sample in sorted_samples:
                     # check that the no reaction is currently happening and
                     # that the sample is worthy of being acted upon
                     if (CollisionAvoidance.DoingReaction
                             or not self.meets_requirements(sample)):
                         continue
-                    s_angle = int(sample.angle/1000)
+                    s_angle = int(sample.angle / 1000)
 
                     count = 1
                     print(s_angle)
                     for sector in Sectors:
-                        if (count-1) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
+                        if (
+                                count - 1
+                        ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
                             self.log_collision(sector, sample)
                             self.react(sector)
                             break
@@ -128,7 +155,7 @@ class CollisionAvoidance(threading.Thread):
 
     def log_collision(self, sector, sample):
         msg = ("Collision detected - {} (distance - {}, confidence - {})"
-            .format(sector, sample.distance, sample.signal_strength))
+               .format(sector, sample.distance, sample.signal_strength))
         self.logger.info(msg)
 
     def meets_requirements(self, sample):
@@ -139,8 +166,8 @@ class CollisionAvoidance(threading.Thread):
         If the sample is worth acting upon, returns True (False otherwise).
         """
         return (sample.signal_strength >= SIGNAL_THRESHOLD
-            and sample.distance != 1
-            and sample.distance <= DISTANCE_THRESHOLD)
+                and sample.distance != 1
+                and sample.distance <= DISTANCE_THRESHOLD)
 
     def react(self, sector):
         """
@@ -162,4 +189,3 @@ class CollisionAvoidance(threading.Thread):
             self.flight_session.current_command.join()
 
         self.Reaction(sector, self.flight_session).start()
-
