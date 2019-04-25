@@ -148,7 +148,6 @@ class Takeoff(Command):
 
         # Take off drone
         self.drone.simple_takeoff(self.alt_target)
-        import inspect
 
         # While not within 0.25 of a meter
         #self.drone.location.global_relative_frame.alt

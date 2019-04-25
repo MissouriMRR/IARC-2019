@@ -124,7 +124,10 @@ class Drone(Vehicle):
         -----
         Only guided mode is currently supported.
         """
-        self.mode = VehicleMode(mode)
+        self._logger.info('Drone {}: Entering GUIDED mode...'.format(self.id))
+        while self.mode != GUIDED:
+            self.mode = VehicleMode(mode)
+        self._logger.info('Drone {}: Now in GUIDED mode...'.format(self.id))
 
         self._logger.info('Drone {}: Arming...'.format(self.id))
         while not self.armed:

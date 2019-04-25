@@ -122,5 +122,5 @@ msg = drone.message_factory.command_long_encode(
 drone.send_mavlink(msg)
 
 fs = FlightSession(drone)
-#fs.next_command = Takeoff(drone, 3)
+fs.drone.arm() # TEMPORARY - FOR TESTING ARM FUNCTION
 fs.loop()
