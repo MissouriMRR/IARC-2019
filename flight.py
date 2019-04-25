@@ -23,8 +23,8 @@ from input_thread import InputThread
 
 LOG_LEVEL = logging.INFO
 
-CONNECT_STRING = '127.0.0.1:14552'
-#CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
+#CONNECT_STRING = '127.0.0.1:14552'
+CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
 
 
 
