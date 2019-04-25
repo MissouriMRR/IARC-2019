@@ -10,7 +10,7 @@ from math import sin, cos, pi
 
 #from flight import Modes
 
-DISTANCE_THRESHOLD = 10 # in cm
+DISTANCE_THRESHOLD = 100 # in cm
 DEVICE = '/dev/ttyUSB0' # linux style
 #DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0 # resend movement instruction at this HZ
