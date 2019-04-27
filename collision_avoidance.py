@@ -15,7 +15,7 @@ DISTANCE_THRESHOLD = 100  # in cm
 DEVICE = '/dev/ttyUSB0'  # linux style
 #DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 30.0  # resend movement instruction at this HZ
-REACT_DURATION = 1.0  # go in opposite direction for this many seconds
+REACT_DURATION = 1.5  # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
 SIGNAL_THRESHOLD = 100
 SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
@@ -31,10 +31,10 @@ class Sectors(Enum):
     SEVEN = 7
     EIGHT = 8
 
-
+"""
 def anglify(sector):
-    offset = -3 - (sector.value - 1) * 2
-    return (cos(offset * pi / 8), sin(offset * pi / 8), 0)
+    offset = -5 - (sector.value - 1) * 2
+    return (sin(offset * pi / 8), cos(offset * pi / 8), 0)
 
 
 # These should all be unit vectors in the appropriate opposite direction
@@ -46,19 +46,20 @@ react_direction = {
     Sectors.FIVE: anglify(Sectors.FIVE),
     Sectors.SIX: anglify(Sectors.SIX),
     Sectors.SEVEN: anglify(Sectors.SEVEN),
-    Sectors.EIGHT: anglify(Sectors.EIGHT),
-"""
-react_direction = {
-    Sectors.ONE: (sin(-3 * pi / 8), cos(-3 * pi / 8), 0),
-    Sectors.TWO: (sin(-5 * pi / 8), cos(-5 * pi / 8), 0),
-    Sectors.THREE: (sin(-7 * pi / 8), cos(-7 * pi / 8), 0),
-    Sectors.FOUR: (sin(-9 * pi / 8), cos(-9 * pi / 8), 0),
-    Sectors.FIVE: (sin(-11 * pi / 8), cos(-11 * pi / 8), 0),
-    Sectors.SIX: (sin(-13 * pi / 8), cos(-13 * pi / 8), 0),
-    Sectors.SEVEN: (sin(-15 * pi / 8), cos(-15 * pi / 8), 0),
-    Sectors.EIGHT: (sin(-17 * pi / 8), cos(-17 * pi / 8), 0)
+    Sectors.EIGHT: anglify(Sectors.EIGHT)
 }
 """
+
+react_direction = {
+    Sectors.ONE: (-sin(5 * pi / 8), -cos(5 * pi / 8), 0),
+    Sectors.TWO: (-sin(7 * pi / 8), -cos(7 * pi / 8), 0),
+    Sectors.THREE: (-sin(9 * pi / 8), -cos(9 * pi / 8), 0),
+    Sectors.FOUR: (-sin(11 * pi / 8), -cos(11 * pi / 8), 0),
+    Sectors.FIVE: (-sin(13 * pi / 8), -cos(13 * pi / 8), 0),
+    Sectors.SIX: (-sin(15 * pi / 8), -cos(15 * pi / 8), 0),
+    Sectors.SEVEN: (-sin(17 * pi / 8), -cos(17 * pi / 8), 0),
+    Sectors.EIGHT: (-sin(19 * pi / 8), -cos(19 * pi / 8), 0)
+}
 
 
 class CollisionAvoidance(threading.Thread):
@@ -101,7 +102,7 @@ class CollisionAvoidance(threading.Thread):
                 time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
             # stabilize movement with a short hover
-            HOVER_DURATION = 0.5
+            HOVER_DURATION = 0.7
             start = timer()
             while timer() - start < HOVER_DURATION:
                 drone.send_velocity()

@@ -1,27 +1,30 @@
 """
 Contains the control object for the laser mounted on the drones
 """
-from RPi import GPIO
+import RPi.GPIO as GPIO
 
 class Laser:
-"""
-This class is a controller for the laser on the drone 
-and will manipulate different variables of the laser
+    """
+    This class is a controller for the laser on the drone 
+    and will manipulate different variables of the laser
 
-Parameters
-----------
+    Parameters
+    ----------
     laser_pin : int
         Pass the pin number that the laser is plugged into
 
-Attributes
-----------
-    _laser_pin : int
-        The pin number where the laser is attached
-"""
+    Attributes
+    ----------
+        _laser_pin : int
+            The pin number where the laser is attached
+    """
     def __init__(self, laser_pin):
         self._laser_pin = laser_pin
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self._laser_pin, GPIO.OUT) #Sets the given pin as output
+
+    def __del__(self):
+        GPIO.cleanup() #cleanup all GPIO when class is destructed
 
     def on(self):
         """

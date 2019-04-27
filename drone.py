@@ -199,7 +199,7 @@ class Drone(Vehicle):
             0, 0, 0, # afx, afy, afz acceleration (not supported yet, ignored in GCS_Mavlink)
             0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 
-    def _make_yaw_message(self, heading, yaw_speed=0, yaw_direction=1, relative=True):
+    def _make_yaw_message(self, heading, yaw_speed=1, yaw_direction=1, relative=True):
         return self.message_factory.command_long_encode(
             0, 0, # target system, target component
             mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
