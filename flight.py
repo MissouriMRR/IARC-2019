@@ -22,14 +22,9 @@ from pymavlink import mavutil
 from utils import parse_command
 
 LOG_LEVEL = logging.INFO
-<<<<<<< HEAD
 HOST = "192.168.2.3"
 PORT = 10000
 NAME = "bob"
-=======
-HOST = "192.168.43.80"
-PORT = 10000
->>>>>>> 46bc7ee46965fb671bd8c9def4f0b2c7825c5289
 
 #CONNECT_STRING = '127.0.0.1:14552'
 CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
@@ -50,7 +45,6 @@ class FlightSession:
         self.drone = drone
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
-<<<<<<< HEAD
         self.client = Client(HOST, PORT, client_name=NAME)
 
         # Temporary - for debugging purposes
@@ -141,5 +135,4 @@ msg = drone.message_factory.command_long_encode(
 drone.send_mavlink(msg)
 
 fs = FlightSession(drone)
-fs.drone.arm()  # TEMPORARY - FOR TESTING ARM FUNCTION
 fs.loop()

@@ -64,9 +64,14 @@ class Move(Command):
         # retains its direction, but has a magnitude of the default
         # movement velocity.
         mag = (north**2 + east**2 + down**2)**0.5
-        self.north = VELOCITY*north/mag
-        self.east = VELOCITY*east/mag
-        self.down = VELOCITY*down/mag
+        if mag:
+            self.north = VELOCITY*north/mag
+            self.east = VELOCITY*east/mag
+            self.down = VELOCITY*down/mag
+        else:
+            self.north = 0
+            self.east = 0
+            self.down = 0
 
 
         self.duration = seconds
