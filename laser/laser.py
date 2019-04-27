@@ -23,6 +23,9 @@ Attributes
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self._laser_pin, GPIO.OUT) #Sets the given pin as output
 
+    def __del__(self):
+        GPIO.cleanup() #cleanup all GPIO when class is destructed
+
     def on(self):
         """
         Turns on the laser mounted on the drone

@@ -8,11 +8,13 @@ import coloredlogs
 import threading
 import time
 from timeit import default_timer as timer
+from laser import Laser
 
 VELOCITY = 0.5 # drone will move at this rate in m/s
 TAKEOFF_ALT = 1 # drone will take off to this altitude (m)
 MESSAGE_RESEND_RATE = 30
 LOG_LEVEL = logging.INFO
+LASER_PIN = 23
 
 class Command(threading.Thread):
     """
@@ -169,7 +171,7 @@ class Takeoff(Command):
 
         self.drone.doing_command = False
 
-class Laser(Command):
+class Heal(Command):
     """
     Causes the laser to turn on and the drone to yaw back and forth to that
     the laser has a better chance of hitting the human.
@@ -182,10 +184,11 @@ class Laser(Command):
         range: how many degrees of heading to yaw back and forth
         duration: (float) number of seconds to yaw for
         """
-        super(Laser, self).__init__(drone)
+        super(Heal, self).__init__(drone)
         self.duration = duration
         self.range = range
         self.yaw_time = 1
+        self.laser = Laser(LASER_PIN)
 
     def run(self):
         """
@@ -199,6 +202,7 @@ class Laser(Command):
 
         cw = True # Start by moving clock-wise
 
+        self.laser.on()
         start = timer()
         while timer() - start < self.duration:
             if self.stop_event.isSet():
@@ -217,6 +221,7 @@ class Laser(Command):
             self.drone.send_yaw(self.range, -1)
             cw = True
             time.sleep(self.yaw_time)
+        self.laser.off()
 
         self.logger.info("Drone {}: finished heal".format(self.drone.id))
         self.drone.doing_command = False

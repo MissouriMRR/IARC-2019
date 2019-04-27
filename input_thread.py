@@ -3,7 +3,7 @@ import logging
 import coloredlogs
 import time
 
-from commands import Takeoff, Move, Laser
+from commands import Takeoff, Move, Heal
 
 LOG_LEVEL = logging.INFO
 
@@ -32,7 +32,7 @@ class InputThread(threading.Thread):
                         drone.land()
                     elif c[0] == 'y':
                         self.logger.info("Next command set to yaw.")
-                        self.fs.next_command = Laser(drone) # default laser routine
+                        self.fs.next_command = Heal(drone) # default laser routine
                     else:
                         self.logger.info("Invalid option.")
                 elif len(c) == 5:
