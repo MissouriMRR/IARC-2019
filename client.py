@@ -21,7 +21,8 @@ class Client(threading.Thread):
         port = kwargs.get("port")
         name = kwargs.get("name")
         print("Starting client with name {} on {}:{}".format(name, host, port))
-        self.SERVER_ADDRESS: Tuple[str, int] = (host, port)
+        # self.SERVER_ADDRESS: Tuple[str, int] = (host, port)
+        self.SERVER_ADDRESS = (host, port)
         self.name = name
         self.command = None
 

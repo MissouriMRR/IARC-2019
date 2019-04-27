@@ -13,6 +13,7 @@ import coloredlogs
 import dronekit
 # Temporary - since no virtual lidar to test with
 from collision_avoidance import CollisionAvoidance
+from client import Client
 from drone import Drone
 # Temporary - for debugging purposes
 from input_thread import InputThread
@@ -21,6 +22,8 @@ from pymavlink import mavutil
 from utils import parse_command
 
 LOG_LEVEL = logging.INFO
+HOST = "192.168.43.80"
+PORT = 10000
 
 #CONNECT_STRING = '127.0.0.1:14552'
 CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
@@ -41,7 +44,7 @@ class FlightSession:
         self.drone = drone
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
-        self.client = Client(kwargs=dict(host=HOST, port=PORT, name=name))
+        self.client = Client(kwargs=dict(host=HOST, port=PORT, name="pr"))
 
         # Temporary - for debugging purposes
         self.debug_loop = InputThread(self)
@@ -78,13 +81,14 @@ class FlightSession:
                     if not self.current_command:
                         if not self.next_command:
                             # hover if no other command
-                            self.drone.send_velocity(0, 0, 0)  # Hover
+                            if self.drone.armed:
+                                self.drone.send_velocity(0, 0, 0)  # Hover
                         else:
                             # give the drone the next command
                             self.current_command = self.next_command
                             self.next_command = None
                             self.current_command.start()
-                time.sleep(0.0001)
+                time.sleep(0.1)
 
             except KeyboardInterrupt:
                 print("Ctrl-C pressed. Landing the drones and shutting down.")
