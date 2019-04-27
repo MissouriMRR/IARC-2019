@@ -21,6 +21,9 @@ from pymavlink import mavutil
 from utils import parse_command
 
 LOG_LEVEL = logging.INFO
+HOST = "192.168.2.3"
+PORT = 10000
+NAME = "bob"
 
 #CONNECT_STRING = '127.0.0.1:14552'
 CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
@@ -41,7 +44,7 @@ class FlightSession:
         self.drone = drone
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
-        self.client = Client(kwargs=dict(host=HOST, port=PORT, name=name))
+        self.client = Client(HOST, PORT, client_name=NAME)
 
         # Temporary - for debugging purposes
         self.debug_loop = InputThread(self)

@@ -1,65 +1,78 @@
+import logging
 import socket
 import threading
 from time import sleep
 from typing import Tuple
 
-HOST = "localhost"
-PORT = 10000
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+DEFAULT_HOST = "localhost"
+DEFAULT_PORT = 10000
+DEFAULT_NAME = "test"
+TIMEOUT = 1
 
 kill = False
 
 
 class Client(threading.Thread):
     def __init__(self,
+                 host=DEFAULT_HOST,
+                 port=DEFAULT_PORT,
+                 client_name=DEFAULT_NAME,
                  group=None,
                  target=None,
-                 name=None,
-                 args=(),
-                 kwargs=dict(host="localhost", port=10000, name="test")):
+                 name=None) -> None:
         super().__init__(group=group, target=target, name=name)
-        host = kwargs.get("host")
-        port = kwargs.get("port")
-        name = kwargs.get("name")
-        print("Starting client with name {} on {}:{}".format(name, host, port))
-        self.SERVER_ADDRESS: Tuple[str, int] = (host, port)
-        self.name = name
+        logger.info("Starting drone {} on {}:{}".format(
+            client_name, host, port))
+        self.SERVER_ADDRESS = (host, port)
+        self.name = client_name
         self.command = None
 
-    def run(self):
+    def run(self) -> None:
         global kill
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect(self.SERVER_ADDRESS)
-            sock.settimeout(2)
-            print("connected")
+            logger.info(
+                "Established connection to Ground Control. Registering...")
             sock.send("drone {}".format(self.name).encode())
-            print(sock.recv(30).decode("utf8"))
+            resp = sock.recv(1)
+            logger.debug("Received: {}".format(resp))
+            status = "Successful" if resp == b"1" else "Failure"
+            logger.info("Registration {}".format(status))
+            sock.settimeout(TIMEOUT)
 
             while not kill:
                 try:
-                    data = sock.recv(1024)
-                    if data:
-                        self.command = data.decode("utf8")
-                    else:
-                        raise Exception
+                    sock.send(b"0")
+                    data = sock.recv(1)
+                    if data == b"1":
+                        command = sock.recv(1024)
+                        logger.debug("Received: {}".format(command))
+                        self.command = command.decode("utf8")
                 except socket.timeout:
                     continue
-        except Exception as e:
-            kill = True
-            print('closing socket', str(e))
+        except socket.error as e:
+            logger.error('SOCKET ERROR: {}'.format(str(e)))
+        finally:
             sock.close()
+            kill = True
             return
 
-    def get_command(self):
+    def get_command(self) -> str:
         data = self.command
         self.command = None
         return data
 
 
-def main():
+def main() -> None:
     global kill
+    host = "localhost"
+    port = 10000
     name = "bob"
-    client = Client(kwargs=dict(host=HOST, port=PORT, name=name))
+    client = Client(host, port, client_name=name)
     client.start()
     try:
         while not kill:
@@ -69,7 +82,6 @@ def main():
             sleep(.4)
     except:
         kill = True
-        return
 
 
 if __name__ == "__main__":
