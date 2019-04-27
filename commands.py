@@ -8,7 +8,7 @@ import coloredlogs
 import threading
 import time
 from timeit import default_timer as timer
-from laser import Laser
+from laser.laser import Laser
 
 VELOCITY = 0.5 # drone will move at this rate in m/s
 TAKEOFF_ALT = 1 # drone will take off to this altitude (m)
