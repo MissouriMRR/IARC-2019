@@ -1,0 +1,4 @@
+dronekit
+pymavlink
+mavproxy
+coloredlogs

@@ -4,30 +4,25 @@ messages sent over the network and translates them into commands that the
 drone is given.
 """
 
+import argparse
 import logging
 import threading
 import time
-from commands import Laser, Move, Takeoff
 
 import coloredlogs
 import dronekit
-from client import Client
-# Temporary - since no virtual lidar to test with
-from collision_avoidance import CollisionAvoidance
-from drone import Drone
-# Temporary - for debugging purposes
-from input_thread import InputThread
-from modes import Modes
 from pymavlink import mavutil
-from utils import parse_command
+from utils import (CollisionAvoidance, Drone, InputThread, Modes, NetClient,
+                   commands, parse_command)
 
 LOG_LEVEL = logging.INFO
+
 HOST = "192.168.2.3"
 PORT = 10000
 NAME = "bob"
 
-#CONNECT_STRING = '127.0.0.1:14552'
-CONNECT_STRING = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
+SIM_CONNECT = '127.0.0.1:14552'
+REAL_CONNECT = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
 
 
 class FlightSession:
@@ -36,7 +31,7 @@ class FlightSession:
     vehicles and commands.
     """
 
-    def __init__(self, drone):
+    def __init__(self, drone, debug):
         coloredlogs.install(LOG_LEVEL)
         self.current_command = None  # hold the current command the drone is doing
         self.next_command = None  # holds the next command for the drone to do
@@ -45,10 +40,13 @@ class FlightSession:
         self.drone = drone
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
-        self.client = Client(HOST, PORT, client_name=NAME)
-
-        # Temporary - for debugging purposes
-        self.debug_loop = InputThread(self)
+        self.avoidance_thread.start()
+        if debug:
+            self.debug_loop = InputThread(self)
+            self.debug_loop.start()
+        else:
+            self.net_client = NetClient(HOST, PORT, client_name=NAME)
+            self.net_client.start()
 
     def loop(self):
         """
@@ -62,13 +60,10 @@ class FlightSession:
             self.logger.info(
                 "Drone not yet initialized - failed to enter main loop")
 
-        self.avoidance_thread.start()
-        self.debug_loop.start()
-        self.client.start()
-
-        while True:
-            try:
-                data = self.client.get_command()
+        try:
+            while True:
+                # Get network command
+                data = self.net_client.get_command()
                 if data:
                     command = parse_command(self, data)
                     self.next_command = command
@@ -90,49 +85,52 @@ class FlightSession:
                             self.next_command = None
                             self.current_command.start()
                 time.sleep(0.1)
+        except KeyboardInterrupt:
+            self.logger.warning(
+                "Ctrl-C pressed. Landing the drones and shutting down.")
+            # Stop current command
+            if self.current_command:
+                self.logger.info("Stopping current command...")
+                self.current_command.stop_event.set()
+                self.current_command.join()
 
-            except KeyboardInterrupt:
-                print("Ctrl-C pressed. Landing the drones and shutting down.")
-                # Stop current command
-                if self.current_command:
-                    self.logger.info("Stopping current command...")
-                    self.current_command.stop_event.set()
-                    self.current_command.join()
+            # Stop collision avoidance
+            if self.avoidance_thread:
+                self.logger.info("Stopping collision avoidance...")
+                self.avoidance_thread.stop_event.set()
+                self.avoidance_thread.join()
 
-                # Stop collision avoidance
-                if self.avoidance_thread:
-                    self.logger.info("Stopping collision avoidance...")
-                    self.avoidance_thread.stop_event.set()
-                    self.avoidance_thread.join()
+            self.drone.land()
 
-                self.drone.land()
-
-                # Stop debug loop
-                if self.debug_loop:
-                    self.logger.info("Stopping debug loop...")
-                    self.debug_loop.stop_event.set()
-                    self.debug_loop.join()
-
-                return
+            # Stop debug loop
+            if self.debug_loop:
+                self.logger.info("Stopping debug loop...")
+                self.debug_loop.stop_event.set()
+                self.debug_loop.join()
 
 
-drone = dronekit.connect(CONNECT_STRING, vehicle_class=Drone)
+def main():
+    global LOG_LEVEL
 
-# Temporily placing this here - attempts to set EKF origin
-msg = drone.message_factory.command_long_encode(
-    0,
-    0,  # target system, target component
-    mavutil.mavlink.MAV_CMD_DO_SET_HOME,  #command
-    0,  #confirmation
-    0,  # param 1, (1=use current location, 0=use specified location)
-    0,  # param 2, unused
-    0,  # param 3,unused
-    0,  # param 4, unused
-    38.5828,
-    90.6629,
-    0)  # param 5 ~ 7 latitude, longitude, altitude
+    parser = argparse.ArgumentParser(description='Flight starter')
+    parser.add_argument('--sim', action='store_true', help='simulation flag')
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help='verbose flag')
+    parser.add_argument('--name', required=True, type=str)
+    parser.add_argument('--host', required=False, type=str)
+    parser.add_argument('--port', required=False, type=str)
 
-drone.send_mavlink(msg)
+    args = parser.parse_args()
 
-fs = FlightSession(drone)
-fs.loop()
+    debug = False if args.host and args.port else True
+    connect_string = SIM_CONNECT if args.sim else REAL_CONNECT
+    LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
+
+    drone = dronekit.connect(connect_string, vehicle_class=Drone)
+
+    fs = FlightSession(drone, debug)
+    fs.loop()
+
+
+if __name__ == "__main__":
+    main()
