@@ -85,6 +85,7 @@ In the quads folder, run:
 python3 fly.py --name=bob --host=localhost --port=10000
 
 ```
+> `-v` can be added to include additional information for debugging
 Notes:
 * Drone name must be unique to all other drone names.
 * In the case that host and port are not included, a command line interface will
@@ -99,15 +100,16 @@ In the gcs folder, run:
 python3 server.py --host=localhost --port=10000
 
 ```
+> `-v` can be added to include additional information for debugging
 
 ## How to contribute
 1. First make sure you are on the up to date `develop` branch.
-```
+```bash
 git checkout develop
 git pull
 ```
 2. Create a branch to add your changes by running.
-```
+```bash
 git checkout -b "branch_name"
 ```
 > `branch_name` should follow the convention `feature/{feature_name}`, or
