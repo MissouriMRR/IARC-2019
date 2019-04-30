@@ -13,7 +13,7 @@ import coloredlogs
 import dronekit
 from pymavlink import mavutil
 from utils import (CollisionAvoidance, Drone, InputThread, Modes, NetClient,
-                   commands, parse_command)
+                   Heal, Takeoff, Move, parse_command)
 
 LOG_LEVEL = logging.INFO
 
