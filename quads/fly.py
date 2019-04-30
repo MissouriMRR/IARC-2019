@@ -41,6 +41,7 @@ class FlightSession:
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
         self.avoidance_thread.start()
+        self.net_client = None
         if debug:
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
