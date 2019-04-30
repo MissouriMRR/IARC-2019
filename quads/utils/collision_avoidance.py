@@ -6,7 +6,7 @@ from math import cos, pi, sin
 from timeit import default_timer as timer
 
 import coloredlogs
-from modes import Modes
+from util.modes import Modes
 from sweeppy import Sweep
 
 #from flight import Modes
