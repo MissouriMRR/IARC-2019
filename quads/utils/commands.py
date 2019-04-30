@@ -105,6 +105,7 @@ class Move(Command):
                 if self.stop_event.isSet():
                     # Send a stablizing command to drone
                     self.drone.send_rel_pos(0, 0, 0)
+                    self.drone.doing_command = False
                     return
                 time.sleep(1.0/MESSAGE_RESEND_RATE)
 
@@ -162,6 +163,7 @@ class Takeoff(Command):
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
                 self.drone.send_rel_pos(0, 0, 0)
+                self.doing_command = False
                 return
             time.sleep(0.001)
 
@@ -211,6 +213,7 @@ class Heal(Command):
         start = timer()
         while timer() - start < self.duration:
             if self.stop_event.isSet():
+                self.doing_command = True
                 return
             if cw:
                 self.drone.send_yaw(self.range, 1)
