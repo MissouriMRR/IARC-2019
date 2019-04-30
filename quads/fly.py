@@ -63,10 +63,11 @@ class FlightSession:
         try:
             while True:
                 # Get network command
-                data = self.net_client.get_command()
-                if data:
-                    command = parse_command(self, data)
-                    self.next_command = command
+                if self.net_client:
+                    data = self.net_client.get_command()
+                    if data:
+                        command = parse_command(self, data)
+                        self.next_command = command
 
                 if self.mode == Modes.NETWORK_CONTROLLED:
                     # If finished with current command, set it to none
