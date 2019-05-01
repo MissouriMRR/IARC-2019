@@ -2,6 +2,8 @@ import json
 import threading
 import time
 
+DELAY: int = 7
+
 
 class AutonomyTest(threading.Thread):
     def __init__(self, messages=None, group=None, target=None, name=None):
@@ -9,11 +11,11 @@ class AutonomyTest(threading.Thread):
         self.messages = messages
 
     def add_message(self, command):
-        self.messages.append(json.loads(command))
+        self.messages.append(json.dumps(command))
 
     def run(self):
         self.add_message({"command": "takeoff", "altitude": 1.0})  # takeoff
-        time.sleep(4)
+        time.sleep(DELAY)
         self.add_message({
             "command": "move",
             "north": 1,
@@ -21,7 +23,7 @@ class AutonomyTest(threading.Thread):
             "down": 0,
             "duration": 4
         })  # move forward
-        time.sleep(7)
+        time.sleep(DELAY)
         self.add_message({
             "command": "move",
             "north": -1,
@@ -29,7 +31,7 @@ class AutonomyTest(threading.Thread):
             "down": 0,
             "duration": 4
         })  # move backward
-        time.sleep(7)
+        time.sleep(DELAY)
         self.add_message({
             "command": "move",
             "north": 0,
@@ -37,7 +39,7 @@ class AutonomyTest(threading.Thread):
             "down": 0,
             "duration": 2
         })  # move right
-        time.sleep(5)
+        time.sleep(DELAY)
         self.add_message({
             "command": "move",
             "north": 0,
@@ -45,7 +47,7 @@ class AutonomyTest(threading.Thread):
             "down": 0,
             "duration": 2
         })  # move left
-        time.sleep(5)
+        time.sleep(DELAY)
         self.add_message({"command": "heal"})  # heal
-        time.sleep(7)
+        time.sleep(DELAY)
         self.add_message({"command": "land"})  # land

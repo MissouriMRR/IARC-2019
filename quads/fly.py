@@ -127,6 +127,7 @@ def main():
     LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
 
     drone = dronekit.connect(connect_string, vehicle_class=Drone)
+    drone.airspeed = .5
 
     fs = FlightSession(drone, debug)
     fs.loop()
