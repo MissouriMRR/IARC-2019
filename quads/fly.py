@@ -86,6 +86,7 @@ class FlightSession:
                             self.current_command = self.next_command
                             self.next_command = None
                             self.current_command.start()
+                self.do_safety_checks()
                 time.sleep(0.001)
         except KeyboardInterrupt:
             self.logger.warning(
@@ -110,6 +111,8 @@ class FlightSession:
                 self.debug_loop.stop_event.set()
                 self.debug_loop.join()
 
+    def do_safety_checks(self):
+        Drone._set_altitude(self._drone) #sets current_altitude
 
 def main():
     global LOG_LEVEL
