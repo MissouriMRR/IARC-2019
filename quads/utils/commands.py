@@ -167,7 +167,7 @@ class Takeoff(Command):
 
         # While not within 0.1 of a meter
         #self.drone.location.global_relative_frame.alt
-        while abs(self.drone.rangefinder.distance - self.alt_target) > 0.1:
+        while abs(self.drone.rangefinder.distance - self.alt_target) > 0.4:
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
                 self.drone.send_rel_pos(0, 0, 0)
