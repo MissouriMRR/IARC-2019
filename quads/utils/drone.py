@@ -52,6 +52,7 @@ class Drone(Vehicle):
     See http://python.dronekit.io/guide/vehicle_state_and_parameters.html for
     all of the attributes we get by subclassing dronekit.Vehicle.
     """
+current_altitude = 0 #current altitude
 
     def __init__(self, *args):
         super(Drone, self).__init__(*args)
@@ -209,3 +210,15 @@ class Drone(Vehicle):
             yaw_direction, # param 3, direction -1 ccw, 1 cw
             relative, # param 4, relative offset 1, absolute angle 0
             0, 0, 0) # param 5 ~ 7 not used
+
+    def _set_altitude(self): #checks and modifies current altitude
+        if self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < 25:
+            Drone.current_altitude = self.rangefinder.distance
+            return 
+        elif self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) > .25:
+            Drone.current_altitude = self.location.global_frame.alt
+            return 
+        elif self.rangefinder.distance < 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < .25: 
+            Drone.current_altitude = self.rangefinder.distance
+            return
+        else: return

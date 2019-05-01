@@ -13,7 +13,7 @@ import coloredlogs
 import dronekit
 from pymavlink import mavutil
 from utils import (CollisionAvoidance, Drone, InputThread, Modes, NetClient,
-                   commands, parse_command)
+                   Heal, Takeoff, Move, parse_command)
 
 LOG_LEVEL = logging.INFO
 
@@ -41,6 +41,7 @@ class FlightSession:
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
         self.avoidance_thread.start()
+        self.net_client = None
         if debug:
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
@@ -63,10 +64,11 @@ class FlightSession:
         try:
             while True:
                 # Get network command
-                data = self.net_client.get_command()
-                if data:
-                    command = parse_command(self, data)
-                    self.next_command = command
+                if self.net_client:
+                    data = self.net_client.get_command()
+                    if data:
+                        command = parse_command(self, data)
+                        self.next_command = command
 
                 if self.mode == Modes.NETWORK_CONTROLLED:
                     # If finished with current command, set it to none
@@ -84,7 +86,8 @@ class FlightSession:
                             self.current_command = self.next_command
                             self.next_command = None
                             self.current_command.start()
-                time.sleep(0.1)
+                self.do_safety_checks()
+                time.sleep(0.001)
         except KeyboardInterrupt:
             self.logger.warning(
                 "Ctrl-C pressed. Landing the drones and shutting down.")
@@ -108,6 +111,8 @@ class FlightSession:
                 self.debug_loop.stop_event.set()
                 self.debug_loop.join()
 
+    def do_safety_checks(self):
+        Drone._set_altitude(self._drone) #sets current_altitude
 
 def main():
     global LOG_LEVEL

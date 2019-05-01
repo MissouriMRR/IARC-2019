@@ -1,5 +1,5 @@
 import json
-from commands import Move, Takeoff, Heal
+from utils.commands import Move, Takeoff, Heal
 
 
 def parse_command(fs, data):

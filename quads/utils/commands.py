@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 
 import coloredlogs
 import dronekit
-from laser.laser import Laser
+from utils.laser.laser import Laser
 
 VELOCITY = 0.5  # drone will move at this rate in m/s
 TAKEOFF_ALT = 1  # drone will take off to this altitude (m)
@@ -110,6 +110,7 @@ class Move(Command):
                 if self.stop_event.isSet():
                     # Send a stablizing command to drone
                     self.drone.send_rel_pos(0, 0, 0)
+                    self.drone.doing_command = False
                     return
                 time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
@@ -164,12 +165,13 @@ class Takeoff(Command):
         # Take off drone
         self.drone.simple_takeoff(self.alt_target)
 
-        # While not within 0.25 of a meter
+        # While not within 0.1 of a meter
         #self.drone.location.global_relative_frame.alt
-        while abs(self.drone.rangefinder.distance - self.alt_target) > 0.25:
+        while abs(self.drone.rangefinder.distance - self.alt_target) > 0.1:
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
                 self.drone.send_rel_pos(0, 0, 0)
+                self.doing_command = False
                 return
             time.sleep(0.001)
 
@@ -221,6 +223,7 @@ class Heal(Command):
         start = timer()
         while timer() - start < self.duration:
             if self.stop_event.isSet():
+                self.doing_command = True
                 return
             if cw:
                 self.drone.send_yaw(self.range, 1)

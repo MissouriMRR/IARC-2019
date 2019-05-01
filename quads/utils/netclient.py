@@ -72,7 +72,7 @@ def main() -> None:
     host = "localhost"
     port = 10000
     name = "bob"
-    client = Client(host, port, client_name=name)
+    client = NetClient(host, port, client_name=name)
     client.start()
     try:
         while not kill:

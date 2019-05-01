@@ -3,7 +3,7 @@ import logging
 import coloredlogs
 import time
 
-from commands import Takeoff, Move, Heal
+from utils.commands import Takeoff, Move, Heal
 
 LOG_LEVEL = logging.INFO
 
