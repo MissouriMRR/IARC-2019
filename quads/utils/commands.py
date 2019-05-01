@@ -93,7 +93,6 @@ class Move(Command):
 
         self.logger.info("Drone {}: starting move".format(self.drone.id))
 
-
         self.drone.send_yaw(0, 1) # heading, direction (cw)
 
         start = timer()
@@ -157,9 +156,9 @@ class Takeoff(Command):
         # Take off drone
         self.drone.simple_takeoff(self.alt_target)
 
-        # While not within 0.25 of a meter
+        # While not within 0.1 of a meter
         #self.drone.location.global_relative_frame.alt
-        while abs(self.drone.rangefinder.distance - self.alt_target) > 0.25:
+        while abs(self.drone.rangefinder.distance - self.alt_target) > 0.1:
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
                 self.drone.send_rel_pos(0, 0, 0)

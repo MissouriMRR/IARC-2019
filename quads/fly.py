@@ -86,7 +86,7 @@ class FlightSession:
                             self.current_command = self.next_command
                             self.next_command = None
                             self.current_command.start()
-                time.sleep(0.1)
+                time.sleep(0.001)
         except KeyboardInterrupt:
             self.logger.warning(
                 "Ctrl-C pressed. Landing the drones and shutting down.")
