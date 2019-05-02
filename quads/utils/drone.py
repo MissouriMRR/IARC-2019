@@ -52,7 +52,7 @@ class Drone(Vehicle):
     See http://python.dronekit.io/guide/vehicle_state_and_parameters.html for
     all of the attributes we get by subclassing dronekit.Vehicle.
     """
-current_altitude = 0 #current altitude
+    current_altitude = 0 #current altitude
 
     def __init__(self, *args):
         super(Drone, self).__init__(*args)

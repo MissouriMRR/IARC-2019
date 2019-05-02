@@ -31,7 +31,7 @@ class FlightSession:
     vehicles and commands.
     """
 
-    def __init__(self, drone, debug):
+    def __init__(self, drone, debug, host, port, name):
         coloredlogs.install(LOG_LEVEL)
         self.current_command = None  # hold the current command the drone is doing
         self.next_command = None  # holds the next command for the drone to do
@@ -46,7 +46,7 @@ class FlightSession:
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
         else:
-            self.net_client = NetClient(HOST, PORT, client_name=NAME)
+            self.net_client = NetClient(host, port, client_name=name)
             self.net_client.start()
 
     def loop(self):
@@ -86,7 +86,7 @@ class FlightSession:
                             self.current_command = self.next_command
                             self.next_command = None
                             self.current_command.start()
-                self.do_safety_checks()
+                # self.do_safety_checks()
                 time.sleep(0.001)
         except KeyboardInterrupt:
             self.logger.warning(
@@ -111,8 +111,8 @@ class FlightSession:
                 self.debug_loop.stop_event.set()
                 self.debug_loop.join()
 
-    def do_safety_checks(self):
-        Drone._set_altitude(self._drone) #sets current_altitude
+    # def do_safety_checks(self):
+        # Drone._set_altitude(self._drone) #sets current_altitude
 
 def main():
     global LOG_LEVEL
@@ -121,20 +121,20 @@ def main():
     parser.add_argument('--sim', action='store_true', help='simulation flag')
     parser.add_argument(
         '--verbose', '-v', action='store_true', help='verbose flag')
-    parser.add_argument('--name', required=True, type=str)
+    parser.add_argument('--name', required=False, type=str)
     parser.add_argument('--host', required=False, type=str)
-    parser.add_argument('--port', required=False, type=str)
+    parser.add_argument('--port', required=False, type=int)
 
     args = parser.parse_args()
 
-    debug = False if args.host and args.port else True
+    debug = False if args.host and args.port and args.name else True
     connect_string = SIM_CONNECT if args.sim else REAL_CONNECT
     LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
 
     drone = dronekit.connect(connect_string, vehicle_class=Drone)
     drone.airspeed = .5
 
-    fs = FlightSession(drone, debug)
+    fs = FlightSession(drone, debug, args.host, args.port, args.name)
     fs.loop()
 
 
