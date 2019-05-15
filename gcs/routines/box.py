@@ -2,7 +2,7 @@ import json
 import threading
 import time
 
-DELAY: int = 7
+DELAY: int = 8
 
 
 class AutonomyTest(threading.Thread):
@@ -21,16 +21,8 @@ class AutonomyTest(threading.Thread):
             "north": 1,
             "east": 0,
             "down": 0,
-            "duration": 4
+            "duration": 3
         })  # move forward
-        time.sleep(DELAY)
-        self.add_message({
-            "command": "move",
-            "north": -1,
-            "east": 0,
-            "down": 0,
-            "duration": 4
-        })  # move backward
         time.sleep(DELAY)
         self.add_message({
             "command": "move",
@@ -38,6 +30,14 @@ class AutonomyTest(threading.Thread):
             "east": 1,
             "down": 0,
             "duration": 3
+        })  # move backward
+        time.sleep(DELAY)
+        self.add_message({
+            "command": "move",
+            "north": -1,
+            "east": 0,
+            "down": 0,
+            "duration": 6
         })  # move right
         time.sleep(DELAY)
         self.add_message({
@@ -45,9 +45,31 @@ class AutonomyTest(threading.Thread):
             "north": 0,
             "east": -1,
             "down": 0,
+            "duration": 6
+        })  # move left
+        time.sleep(DELAY)
+        self.add_message({
+            "command": "move",
+            "north": 1,
+            "east": 0,
+            "down": 0,
+            "duration": 6
+        })  # move left
+        time.sleep(DELAY)
+        self.add_message({
+            "command": "move",
+            "north": 0,
+            "east": 1,
+            "down": 0,
             "duration": 3
         })  # move left
         time.sleep(DELAY)
-        self.add_message({"command": "heal"})  # heal
+        self.add_message({
+            "command": "move",
+            "north": -1,
+            "east": 0,
+            "down": 0,
+            "duration": 3
+        })  # move left
         time.sleep(DELAY)
         self.add_message({"command": "land"})  # land
