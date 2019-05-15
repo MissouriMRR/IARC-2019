@@ -6,8 +6,8 @@ from math import cos, pi, sin
 from timeit import default_timer as timer
 
 import coloredlogs
-from utils.modes import Modes
 from sweeppy import Sweep
+from utils.modes import Modes
 
 #from flight import Modes
 
@@ -31,13 +31,15 @@ class Sectors(Enum):
     SEVEN = 7
     EIGHT = 8
 
-"""
+
 def anglify(sector):
-    offset = -5 - (sector.value - 1) * 2
-    return (sin(offset * pi / 8), cos(offset * pi / 8), 0)
+    offset = 5 + (sector.value - 1) * 2
+    return (-sin(offset * pi / 8), -cos(offset * pi / 8), 0)
 
 
 # These should all be unit vectors in the appropriate opposite direction
+REACT_DIRECTION = {x: anglify(x) for x in Sectors}
+"""
 react_direction = {
     Sectors.ONE: anglify(Sectors.ONE),
     Sectors.TWO: anglify(Sectors.TWO),
@@ -48,7 +50,6 @@ react_direction = {
     Sectors.SEVEN: anglify(Sectors.SEVEN),
     Sectors.EIGHT: anglify(Sectors.EIGHT)
 }
-"""
 
 react_direction = {
     Sectors.ONE: (-sin(5 * pi / 8), -cos(5 * pi / 8), 0),
@@ -60,6 +61,7 @@ react_direction = {
     Sectors.SEVEN: (-sin(17 * pi / 8), -cos(17 * pi / 8), 0),
     Sectors.EIGHT: (-sin(19 * pi / 8), -cos(19 * pi / 8), 0)
 }
+"""
 
 
 class CollisionAvoidance(threading.Thread):
@@ -92,9 +94,16 @@ class CollisionAvoidance(threading.Thread):
             Moves the drone in the opposite direction of the obstacle.
             """
             drone = self.fs.drone
-            direction = react_direction[self.sector]
+            direction = REACT_DIRECTION[self.sector]
             n, e, d = direction
             print(n, e, d)
+            self.fs.net_client.send_teamwork({
+                "command": "move",
+                "north": n,
+                "east": e,
+                "down": d,
+                "duration": REACT_DURATION
+            })
             # move in opposite direction
             drone.send_rel_pos(n, e, d)
             start = timer()

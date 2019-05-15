@@ -12,8 +12,8 @@ import time
 import coloredlogs
 import dronekit
 from pymavlink import mavutil
-from utils import (CollisionAvoidance, Drone, InputThread, Modes, NetClient,
-                   Heal, Takeoff, Move, parse_command)
+from utils import (CollisionAvoidance, Drone, Heal, InputThread, Modes, Move,
+                   NetClient, Takeoff, parse_command)
 
 LOG_LEVEL = logging.INFO
 
@@ -46,7 +46,8 @@ class FlightSession:
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
         else:
-            self.net_client = NetClient(HOST, PORT, client_name=NAME)
+            self.net_client = NetClient(
+                HOST, PORT, client_name=NAME, flight_session=self)
             self.net_client.start()
 
     def loop(self):
@@ -112,7 +113,8 @@ class FlightSession:
                 self.debug_loop.join()
 
     def do_safety_checks(self):
-        Drone._set_altitude(self._drone) #sets current_altitude
+        Drone._set_altitude(self._drone)  #sets current_altitude
+
 
 def main():
     global LOG_LEVEL

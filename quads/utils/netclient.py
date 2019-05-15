@@ -20,6 +20,7 @@ class NetClient(threading.Thread):
                  host=DEFAULT_HOST,
                  port=DEFAULT_PORT,
                  client_name=DEFAULT_NAME,
+                 flight_session=None
                  group=None,
                  target=None,
                  name=None) -> None:
@@ -29,6 +30,8 @@ class NetClient(threading.Thread):
         self.SERVER_ADDRESS = (host, port)
         self.name = client_name
         self.command = None
+        self.messages = []
+        self.fs = flight_session
 
     def run(self) -> None:
         global kill
@@ -46,12 +49,20 @@ class NetClient(threading.Thread):
 
             while not kill:
                 try:
-                    sock.send(b"0")
+                    if self.messages:
+                        sock.send(b"1")
+                        message = self.messages.pop(0).encode()
+                        sock.send(message)
+                    else:
+                        sock.send(b"0")
                     data = sock.recv(1)
                     if data == b"1":
                         command = sock.recv(1024)
-                        logger.debug("Received: {}".format(command))
-                        self.command = command.decode("utf8")
+                        if self.fs.mode == Modes.NETWORK_CONTROLLED:
+                            logger.debug("Received: {}".format(command))
+                            self.command = command.decode("utf8")
+                        else:
+                            logger.debug("Received: {}. Not acting: in wrong mode".format(command))
                 except socket.timeout:
                     continue
         except socket.error as e:
@@ -60,6 +71,9 @@ class NetClient(threading.Thread):
             sock.close()
             kill = True
             return
+
+    def send_teamwork(self, message):
+        self.messages.append(message)
 
     def get_command(self) -> str:
         data = self.command
