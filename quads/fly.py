@@ -17,10 +17,6 @@ from utils import (CollisionAvoidance, Drone, Heal, InputThread, Modes, Move,
 
 LOG_LEVEL = logging.INFO
 
-HOST = "192.168.2.3"
-PORT = 10000
-NAME = "bob"
-
 SIM_CONNECT = '127.0.0.1:14552'
 REAL_CONNECT = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
 
@@ -31,7 +27,7 @@ class FlightSession:
     vehicles and commands.
     """
 
-    def __init__(self, drone, debug, host, port, name):
+    def __init__(self, drone, debug, host=None, port=None, name=None):
         coloredlogs.install(LOG_LEVEL)
         self.current_command = None  # hold the current command the drone is doing
         self.next_command = None  # holds the next command for the drone to do
@@ -47,7 +43,7 @@ class FlightSession:
             self.debug_loop.start()
         else:
             self.net_client = NetClient(
-                HOST, PORT, client_name=NAME, flight_session=self)
+                host, port, client_name=NAME, flight_session=self)
             self.net_client.start()
 
     def loop(self):

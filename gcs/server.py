@@ -78,6 +78,7 @@ class DroneThread(threading.Thread):
                     elif intent == b"1":
                         # Intent to pass Reaction
                         reaction = self.sock.recv(1024)
+                        print(reaction)
                         for key in messages:
                             # Send reaction to all drones so they all make same action
                             messages[key].append(reaction)
