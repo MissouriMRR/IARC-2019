@@ -1,0 +1,52 @@
+import json
+import threading
+import time
+
+box = [{
+    "command": "takeoff",
+    "altitude": 1.0
+}, {
+    "command": "move",
+    "north": 1,
+    "east": 0,
+    "down": 0,
+    "duration": 3
+}, {
+    "command": "move",
+    "north": 0,
+    "east": 1,
+    "down": 0,
+    "duration": 3
+}, {
+    "command": "move",
+    "north": -1,
+    "east": 0,
+    "down": 0,
+    "duration": 6
+}, {
+    "command": "move",
+    "north": 0,
+    "east": -1,
+    "down": 0,
+    "duration": 6
+}, {
+    "command": "move",
+    "north": 1,
+    "east": 0,
+    "down": 0,
+    "duration": 6
+}, {
+    "command": "move",
+    "north": 0,
+    "east": 1,
+    "down": 0,
+    "duration": 3
+}, {
+    "command": "move",
+    "north": -1,
+    "east": 0,
+    "down": 0,
+    "duration": 3
+}, {
+    "command": "land"
+}]

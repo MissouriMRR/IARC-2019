@@ -4,18 +4,17 @@ from utils import Heal, Move, Takeoff
 
 
 def parse_command(fs, data):
-    parsed = json.loads(data)
-    command = parsed.get("command")
+    command = data.get("command")
     if command == "move":
-        north = parsed.get("north")
-        east = parsed.get("east")
-        down = parsed.get("down")
-        duration = parsed.get("duration")
+        north = data.get("north")
+        east = data.get("east")
+        down = data.get("down")
+        duration = data.get("duration")
         return Move(fs.drone, north, east, down, duration)
     elif command == "land":
         fs.drone.land()
     elif command == "takeoff":
-        altitude = parsed.get("altitude")
+        altitude = data.get("altitude")
         return Takeoff(fs.drone, altitude)
     elif command == "heal":
         return Heal(fs.drone)

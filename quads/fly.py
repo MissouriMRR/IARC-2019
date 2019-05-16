@@ -5,6 +5,7 @@ drone is given.
 """
 
 import argparse
+import json
 import logging
 import threading
 import time
@@ -12,6 +13,7 @@ import time
 import coloredlogs
 import dronekit
 from pymavlink import mavutil
+from routines import ROUTINES
 from utils import (CollisionAvoidance, Drone, Heal, InputThread, Modes, Move,
                    NetClient, Takeoff, parse_command)
 
@@ -19,6 +21,7 @@ LOG_LEVEL = logging.INFO
 
 SIM_CONNECT = '127.0.0.1:14552'
 REAL_CONNECT = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
+REAL_CONNECT = '/dev/serial/by-id/usb-ArduPilot_fmuv2_270025000D51373332383537-if00'
 
 
 class FlightSession:
@@ -27,23 +30,33 @@ class FlightSession:
     vehicles and commands.
     """
 
-    def __init__(self, drone, debug, host=None, port=None, name=None):
+    def __init__(self,
+                 drone,
+                 debug,
+                 host=None,
+                 port=None,
+                 name=None,
+                 routine=None):
         coloredlogs.install(LOG_LEVEL)
         self.current_command = None  # hold the current command the drone is doing
         self.next_command = None  # holds the next command for the drone to do
         self.logger = logging.getLogger(__name__)
         self.mode = Modes.NETWORK_CONTROLLED
         self.drone = drone
+        self.routine = routine
+
+        self.avoidance_thread = None
+        self.debug_loop = None
+        self.net_client = None
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
         self.avoidance_thread.start()
-        self.net_client = None
         if debug:
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
         else:
             self.net_client = NetClient(
-                host, port, client_name=NAME, flight_session=self)
+                host, port, client_name=name, flight_session=self)
             self.net_client.start()
 
     def loop(self):
@@ -61,11 +74,17 @@ class FlightSession:
         try:
             while True:
                 # Get network command
+                command_set = False
                 if self.net_client:
                     data = self.net_client.get_command()
                     if data:
-                        command = parse_command(self, data)
-                        self.next_command = command
+                        command = parse_command(self, json.loads(data))
+                        command_set = True
+                if self.routine and not command_set and not self.next_command:
+                    command = parse_command(
+                        self,
+                        self.routine.pop(0))  #command from autonomous routine
+                self.next_command = command
 
                 if self.mode == Modes.NETWORK_CONTROLLED:
                     # If finished with current command, set it to none
@@ -108,11 +127,8 @@ class FlightSession:
                 self.debug_loop.stop_event.set()
                 self.debug_loop.join()
 
-    def do_safety_checks(self):
-        Drone._set_altitude(self._drone)  #sets current_altitude
-
     # def do_safety_checks(self):
-    # Drone._set_altitude(self._drone) #sets current_altitude
+    #     Drone._set_altitude(self._drone)  #sets current_altitude
 
 
 def main():
@@ -125,17 +141,20 @@ def main():
     parser.add_argument('--name', required=False, type=str)
     parser.add_argument('--host', required=False, type=str)
     parser.add_argument('--port', required=False, type=int)
+    parser.add_argument('--routine', required=False, type=int)
 
     args = parser.parse_args()
 
     debug = False if args.host and args.port and args.name else True
     connect_string = SIM_CONNECT if args.sim else REAL_CONNECT
     LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
+    routine = ROUTINES.get(args.routine)
+    print("USING ROUTINE:", routine.__name__)
 
     drone = dronekit.connect(connect_string, vehicle_class=Drone)
     drone.airspeed = .5
 
-    fs = FlightSession(drone, debug, args.host, args.port, args.name)
+    fs = FlightSession(drone, debug, args.host, args.port, args.name, routine)
     fs.loop()
 
 
