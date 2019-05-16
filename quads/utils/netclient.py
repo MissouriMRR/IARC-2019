@@ -20,7 +20,7 @@ class NetClient(threading.Thread):
                  host=DEFAULT_HOST,
                  port=DEFAULT_PORT,
                  client_name=DEFAULT_NAME,
-                 flight_session=None
+                 flight_session=None,
                  group=None,
                  target=None,
                  name=None) -> None:
@@ -58,15 +58,14 @@ class NetClient(threading.Thread):
                     data = sock.recv(1)
                     if data == b"1":
                         command = sock.recv(1024)
-                        if self.fs.mode == Modes.NETWORK_CONTROLLED:
-                            logger.debug("Received: {}".format(command))
-                            self.command = command.decode("utf8")
-                        else:
-                            logger.debug("Received: {}. Not acting: in wrong mode".format(command))
+                        logger.debug("Received: {}".format(command))
+                        self.command = command.decode("utf8")
                 except socket.timeout:
                     continue
         except socket.error as e:
             logger.error('SOCKET ERROR: {}'.format(str(e)))
+        except Exception as e:
+            print("ERROR", str(e))
         finally:
             sock.close()
             kill = True
@@ -85,7 +84,7 @@ def main() -> None:
     global kill
     host = "localhost"
     port = 10000
-    name = "bob"
+    name = "footclan"
     client = NetClient(host, port, client_name=name)
     client.start()
     try:
@@ -94,7 +93,8 @@ def main() -> None:
             if data:
                 print("Command Received:", data)
             sleep(.4)
-    except:
+    except Exception as e:
+        print(str(e))
         kill = True
 
 

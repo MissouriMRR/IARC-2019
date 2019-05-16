@@ -71,6 +71,7 @@ class DroneThread(threading.Thread):
                     intent = self.sock.recv(1)
                     if not intent:
                         # Intent to kill connection
+                        print("INTENT", intent)
                         raise Exception("Socket closed by drone")
                     elif intent == b"0":
                         # Intent to remain alive
@@ -78,13 +79,13 @@ class DroneThread(threading.Thread):
                     elif intent == b"1":
                         # Intent to pass Reaction
                         reaction = self.sock.recv(1024)
-                        print(reaction)
+                        print("REACTION", reaction)
                         for key in messages:
                             # Send reaction to all drones so they all make same action
                             messages[key].append(reaction)
                     if self.messages:
                         self.sock.send(b"1")
-                        message: str = self.messages.pop(0).encode()
+                        message: str = self.messages.pop(0)
                         logger.debug("<{}> Sending: {}".format(
                             self.name, message))
                     else:

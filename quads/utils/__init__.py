@@ -6,4 +6,4 @@ from utils.input_thread import InputThread
 from utils.modes import Modes
 from utils.netclient import NetClient
 
-from .utils import parse_command
+from utils.utils import parse_command
