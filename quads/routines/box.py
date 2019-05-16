@@ -1,7 +1,3 @@
-import json
-import threading
-import time
-
 box = [{
     "command": "takeoff",
     "altitude": 1.0
