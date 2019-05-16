@@ -52,6 +52,7 @@ class NetClient(threading.Thread):
                     if self.messages:
                         sock.send(b"1")
                         message = self.messages.pop(0).encode()
+                        print("SENDING MESSAGE:", message)
                         sock.send(message)
                     else:
                         sock.send(b"0")
@@ -65,7 +66,7 @@ class NetClient(threading.Thread):
         except socket.error as e:
             logger.error('SOCKET ERROR: {}'.format(str(e)))
         except Exception as e:
-            print("ERROR", str(e))
+            print("NET ERROR", str(e))
         finally:
             sock.close()
             kill = True

@@ -189,6 +189,8 @@ class CollisionAvoidance(threading.Thread):
         sector (enum): the sector that an obstacle has been detected in.
         """
         if not self.flight_session.drone.armed:
+            pass
+        if CollisionAvoidance.DoingReaction:
             return
 
         self.flight_session.mode = Modes.OBSTACLE_AVOIDANCE
