@@ -71,6 +71,9 @@ class FlightSession:
             self.logger.info(
                 "Drone not yet initialized - failed to enter main loop")
 
+        # Wait for Enter to continue into the flight
+        input("Press Enter to continue...")
+
         try:
             while True:
                 # Get network command
@@ -141,7 +144,7 @@ def main():
     parser.add_argument('--name', required=False, type=str)
     parser.add_argument('--host', required=False, type=str)
     parser.add_argument('--port', required=False, type=int)
-    parser.add_argument('--routine', required=False, type=int)
+    parser.add_argument('--routine', required=False, type=str)
 
     args = parser.parse_args()
 
@@ -149,7 +152,7 @@ def main():
     connect_string = SIM_CONNECT if args.sim else REAL_CONNECT
     LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
     routine = ROUTINES.get(args.routine)
-    print("USING ROUTINE:", routine.__name__)
+    print("USING ROUTINE:", args.routine)
 
     drone = dronekit.connect(connect_string, vehicle_class=Drone)
     drone.airspeed = .5

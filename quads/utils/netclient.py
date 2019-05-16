@@ -1,3 +1,4 @@
+import json
 import logging
 import socket
 import threading
@@ -73,7 +74,7 @@ class NetClient(threading.Thread):
             return
 
     def send_teamwork(self, message):
-        self.messages.append(message)
+        self.messages.append(json.dumps(message))
 
     def get_command(self) -> str:
         data = self.command

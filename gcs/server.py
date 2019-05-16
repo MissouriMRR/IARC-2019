@@ -5,8 +5,6 @@ import socket
 import threading
 from typing import Any, List, Tuple
 
-from routines.test_autonomous import AutonomyTest
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_HOST: str = "localhost"
@@ -58,8 +56,6 @@ class DroneThread(threading.Thread):
         self.sock = socket
         self.messages: List[str] = messages
         self.name = drone_name
-
-        # AutonomyTest(messages).start()
 
         self.sock.settimeout(TIMEOUT)
 
