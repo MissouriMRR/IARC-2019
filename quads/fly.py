@@ -13,7 +13,7 @@ import time
 import coloredlogs
 import dronekit
 from pymavlink import mavutil
-from routines import ROUTINES
+from routines import ROUTINES, NetTesting
 from utils import (CollisionAvoidance, Drone, Heal, InputThread, Modes, Move,
                    NetClient, Takeoff, parse_command)
 
@@ -44,6 +44,7 @@ class FlightSession:
         self.mode = Modes.NETWORK_CONTROLLED
         self.drone = drone
         self.routine = routine
+        self.lock = threading.Lock()
 
         self.avoidance_thread = None
         self.debug_loop = None
@@ -75,37 +76,31 @@ class FlightSession:
         input("Press Enter to continue...")
 
         try:
+            routine = NetTesting(self)
+            # routine = self.routine()
+            routine.start()
             while True:
-                # Get network command
-                command_set = False
+                # If finished with current command, set it to none
+                if self.current_command and not self.drone.doing_command:
+                    self.current_command = None
+
                 if self.net_client:
+                    # Get network command
                     data = self.net_client.get_command()
                     if data:
-                        command = parse_command(self, json.loads(data))
-                        command_set = True
-                if self.routine and not command_set and not self.next_command:
-                    command = parse_command(
-                        self,
-                        self.routine.pop(0))  #command from autonomous routine
-                self.next_command = command
-
-                if self.mode == Modes.NETWORK_CONTROLLED:
-                    # If finished with current command, set it to none
-                    if self.current_command and not self.drone.doing_command:
-                        self.current_command = None
-
-                    # If there is no current command, try to give a new one
-                    if not self.current_command:
-                        if not self.next_command:
-                            # hover if no other command
-                            if self.drone.armed:
-                                self.drone.send_velocity(0, 0, 0)  # Hover
-                        else:
-                            # give the drone the next command
-                            self.current_command = self.next_command
-                            self.next_command = None
+                        with self.lock:
+                            self.current_command.stop_event.set()
+                            self.current_command.join()
+                            command = parse_command(self, json.loads(data))
+                            self.current_command = command
                             self.current_command.start()
-                # self.do_safety_checks()
+
+                # If there is no current command, try to give a new one
+                if not self.current_command:
+                    # hover if no other command
+                    if self.drone.armed:
+                        self.drone.send_velocity(0, 0, 0)  # Hover
+                else:
                 time.sleep(0.001)
         except KeyboardInterrupt:
             self.logger.warning(
