@@ -45,6 +45,7 @@ class FlightSession:
         self.drone = drone
         self.routine = routine
         self.lock = threading.Lock()
+        self.debug = debug
 
         self.avoidance_thread = None
         self.debug_loop = None
@@ -52,7 +53,7 @@ class FlightSession:
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
         self.avoidance_thread.start()
-        if debug:
+        if self.debug:
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
         else:
@@ -76,8 +77,9 @@ class FlightSession:
         input("Press Enter to continue...")
 
         try:
-            routine = self.routine(self)
-            routine.start()
+            if not self.debug and self.routine:
+                routine = self.routine(self)
+                routine.start()
             while True:
                 # If finished with current command, set it to none
                 if self.current_command and not self.drone.doing_command:
