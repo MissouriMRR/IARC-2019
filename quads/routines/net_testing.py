@@ -12,4 +12,4 @@ class NetTesting(threading.Thread):
         self.fs = flight_session
 
     def run(self):
-        Takeoff(self.fs.drone, 1)
+        return

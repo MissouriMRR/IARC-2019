@@ -76,8 +76,7 @@ class FlightSession:
         input("Press Enter to continue...")
 
         try:
-            routine = NetTesting(self)
-            # routine = self.routine()
+            routine = self.routine()
             routine.start()
             while True:
                 # If finished with current command, set it to none
@@ -89,7 +88,7 @@ class FlightSession:
                     data = self.net_client.get_command()
                     if data:
                         with self.lock:
-                            self.current_command.stop_event.set()
+                            self.current_command.stop()
                             self.current_command.join()
                             command = parse_command(self, json.loads(data))
                             self.current_command = command
@@ -100,7 +99,6 @@ class FlightSession:
                     # hover if no other command
                     if self.drone.armed:
                         self.drone.send_velocity(0, 0, 0)  # Hover
-                else:
                 time.sleep(0.001)
         except KeyboardInterrupt:
             self.logger.warning(

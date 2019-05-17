@@ -51,7 +51,7 @@ import json
 import threading
 import time
 
-from quads.utils import parse_command
+from utils import parse_command
 
 
 class Box(threading.Thread):
@@ -68,6 +68,8 @@ class Box(threading.Thread):
                 if not self.fs.drone.doing_command:
                     command = parse_command(
                         self, box.pop(0))  #command from autonomous routine
-                self.fs.current_command = command
+                    print("BOX GAVE:", command)
+                    self.fs.current_command = command
+                    self.fs.current_command.start()
 
             time.sleep(0.001)
