@@ -27,7 +27,7 @@ class InputThread(threading.Thread):
                         self.fs.next_command = Takeoff(drone, 1)  # takeoff 1 m
                     elif c[0] == 'l':
                         self.logger.info("Next command set to land.")
-                        with self.lock:
+                        with self.fs.lock:
                             if self.fs.current_command:
                                 self.fs.current_command.stop()
                                 self.fs.current_command.join()

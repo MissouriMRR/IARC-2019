@@ -41,7 +41,7 @@ def handle_voice(target, text):
             "duration": 4
         }
 
-    messages[target].append(json.dumps(msg))
+    messages[target].append(json.dumps(msg).encode())
 
 
 class DroneThread(threading.Thread):

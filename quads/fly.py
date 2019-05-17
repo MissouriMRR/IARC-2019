@@ -75,7 +75,8 @@ class FlightSession:
         if res == "d":
             self.debug_loop = InputThread(self)
             self.debug_loop.start()
-        self.net_client.start()
+        if self.net_client:
+            self.net_client.start()
 
         try:
             if self.routine:
@@ -153,7 +154,7 @@ def main():
 
     args = parser.parse_args()
 
-    net = True if (args.host or args.port) and args.name else True
+    net = True if (args.host or args.port) and args.name else False
     connect_string = SIM_CONNECT if args.sim else REAL_CONNECT
     LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
     routine = ROUTINES.get(args.routine)
