@@ -1,4 +1,4 @@
-from utils.commands import Takeoff, Move, Heal
+from utils.commands import Takeoff, Move, Heal, Hover, Land
 
 from utils.collision_avoidance import CollisionAvoidance
 from utils.drone import Drone

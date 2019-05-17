@@ -13,7 +13,7 @@ from utils.laser.laser import Laser
 
 VELOCITY = 0.5  # drone will move at this rate in m/s
 TAKEOFF_ALT = 1  # drone will take off to this altitude (m)
-MESSAGE_RESEND_RATE = 30
+MESSAGE_RESEND_RATE = 15
 LOG_LEVEL = logging.INFO
 LASER_PIN = 23
 
@@ -102,8 +102,6 @@ class Move(Command):
 
         start = timer()
         while timer() - start < self.duration:
-            self.logger.info("Drone {}: starting move interval".format(
-                self.drone.id))
             self.drone.send_rel_pos(self.north, self.east, self.down)
             start_interval = timer()
             while timer() - start_interval < 1.0:  # 1 second intervals
@@ -122,7 +120,6 @@ class Move(Command):
                 # Send a stablizing command to drone
                 self.drone.send_rel_pos(0, 0, 0)
                 return
-            print("1")
             self.drone.send_velocity(0, 0, 0)
             time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
@@ -171,7 +168,7 @@ class Takeoff(Command):
             if self.stop_event.isSet():
                 # Send a stablizing command to drone
                 self.drone.send_rel_pos(0, 0, 0)
-                self.doing_command = False
+                self.drone.doing_command = False
                 return
             time.sleep(0.001)
 
@@ -223,7 +220,7 @@ class Heal(Command):
         start = timer()
         while timer() - start < self.duration:
             if self.stop_event.isSet():
-                self.doing_command = True
+                self.drone.doing_command = False
                 return
             if cw:
                 self.drone.send_yaw(self.range, 1)
@@ -242,4 +239,49 @@ class Heal(Command):
         self.laser.off()
 
         self.logger.info("Drone {}: finished heal".format(self.drone.id))
+        self.drone.doing_command = False
+
+
+class Hover(Command):
+    def __init__(self, drone, duration=1):
+        """
+        Parameters:
+        -----------
+        drone: a dronekit Vehicle object (must already be connect)
+        duration: (float) number of seconds to yaw for
+        """
+        super(Hover, self).__init__(drone)
+        self.duration = duration
+
+    def run(self):
+        self.drone.doing_command = True
+
+        self.logger.info("Drone {}: starting hover".format(self.drone.id))
+
+        start = timer()
+        while timer() - start < self.duration:
+            if self.stop_event.isSet():
+                self.drone.doing_command = False
+                return
+            self.drone.send_rel_pos(0, 0, 0)  # Hover
+            time.sleep(1.0 / MESSAGE_RESEND_RATE)
+
+        self.logger.info("Drone {}: finished hover".format(self.drone.id))
+        self.drone.doing_command = False
+
+
+class Land(Command):
+    def __init__(self, drone):
+        """
+        Parameters:
+        -----------
+        drone: a dronekit Vehicle object (must already be connect)
+        """
+        super(Land, self).__init__(drone)
+
+    def run(self):
+        self.drone.doing_command = True
+
+        self.drone.land()
+
         self.drone.doing_command = False

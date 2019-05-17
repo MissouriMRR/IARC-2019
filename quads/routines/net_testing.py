@@ -2,7 +2,7 @@ import json
 import threading
 import time
 
-from quads.utils import Takeoff, parse_command
+from utils import Takeoff, parse_command
 
 
 class NetTesting(threading.Thread):

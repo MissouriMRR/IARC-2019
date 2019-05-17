@@ -18,6 +18,7 @@ from utils import (CollisionAvoidance, Drone, Heal, InputThread, Modes, Move,
                    NetClient, Takeoff, parse_command)
 
 LOG_LEVEL = logging.INFO
+DEFAULT_PORT = 10000
 
 SIM_CONNECT = '127.0.0.1:14552'
 REAL_CONNECT = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
@@ -32,9 +33,9 @@ class FlightSession:
 
     def __init__(self,
                  drone,
-                 debug,
+                 net=False,
                  host=None,
-                 port=None,
+                 port=DEFAULT_PORT,
                  name=None,
                  routine=None):
         coloredlogs.install(LOG_LEVEL)
@@ -45,7 +46,6 @@ class FlightSession:
         self.drone = drone
         self.routine = routine
         self.lock = threading.Lock()
-        self.debug = debug
 
         self.avoidance_thread = None
         self.debug_loop = None
@@ -53,13 +53,9 @@ class FlightSession:
 
         self.avoidance_thread = CollisionAvoidance(flight_session=self)
         self.avoidance_thread.start()
-        if self.debug:
-            self.debug_loop = InputThread(self)
-            self.debug_loop.start()
-        else:
+        if net:
             self.net_client = NetClient(
                 host, port, client_name=name, flight_session=self)
-            self.net_client.start()
 
     def loop(self):
         """
@@ -74,42 +70,56 @@ class FlightSession:
                 "Drone not yet initialized - failed to enter main loop")
 
         # Wait for Enter to continue into the flight
-        input("Press Enter to continue...")
+        res = input(
+            "Press Enter to continue, or d and enter to enter debug mode...")
+        if res == "d":
+            self.debug_loop = InputThread(self)
+            self.debug_loop.start()
+        self.net_client.start()
 
         try:
-            if not self.debug and self.routine:
+            if self.routine:
                 routine = self.routine(self)
                 routine.start()
             while True:
                 # If finished with current command, set it to none
-                if self.current_command and not self.drone.doing_command:
-                    self.current_command = None
+                with self.lock:
+                    if self.current_command and not self.drone.doing_command:
+                        self.current_command = None
 
                 if self.net_client:
                     # Get network command
                     data = self.net_client.get_command()
                     if data:
                         with self.lock:
-                            self.current_command.stop()
-                            self.current_command.join()
+                            if self.current_command:
+                                self.current_command.stop()
+                                self.current_command.join()
                             command = parse_command(self, json.loads(data))
                             self.current_command = command
                             self.current_command.start()
 
-                # If there is no current command, try to give a new one
-                if not self.current_command:
-                    # hover if no other command
-                    if self.drone.armed:
-                        self.drone.send_velocity(0, 0, 0)  # Hover
-                time.sleep(0.001)
+                with self.lock:
+                    # If there is no current command, try to give a new one
+                    if not self.current_command and self.mode != Modes.OBSTACLE_AVOIDANCE:
+                        if not self.next_command:
+                            # hover if no other command
+                            if self.drone.armed:
+                                self.drone.send_velocity(0, 0, 0)  # Hover
+                        else:
+                            self.current_command = self.next_command
+                            self.next_command = None
+                            self.current_command.start()
+                time.sleep(0.01)
         except KeyboardInterrupt:
             self.logger.warning(
                 "Ctrl-C pressed. Landing the drones and shutting down.")
             # Stop current command
-            if self.current_command:
-                self.logger.info("Stopping current command...")
-                self.current_command.stop_event.set()
-                self.current_command.join()
+            with self.lock:
+                if self.current_command:
+                    self.logger.info("Stopping current command...")
+                    self.current_command.stop()
+                    self.current_command.join()
 
             # Stop collision avoidance
             if self.avoidance_thread:
@@ -143,16 +153,17 @@ def main():
 
     args = parser.parse_args()
 
-    debug = False if args.host and args.port and args.name else True
+    net = True if (args.host or args.port) and args.name else True
     connect_string = SIM_CONNECT if args.sim else REAL_CONNECT
     LOG_LEVEL = logging.DEBUG if args.verbose else logging.INFO
     routine = ROUTINES.get(args.routine)
-    print("USING ROUTINE:", args.routine)
+    if routine:
+        print("USING ROUTINE:", args.routine)
 
     drone = dronekit.connect(connect_string, vehicle_class=Drone)
     drone.airspeed = .5
 
-    fs = FlightSession(drone, debug, args.host, args.port, args.name, routine)
+    fs = FlightSession(drone, net, args.host, args.port, args.name, routine)
     fs.loop()
 
 

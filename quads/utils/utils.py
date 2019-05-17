@@ -1,6 +1,6 @@
 import json
 
-from utils import Heal, Move, Takeoff
+from utils import Heal, Hover, Land, Move, Takeoff
 
 
 def parse_command(fs, data):
@@ -12,9 +12,12 @@ def parse_command(fs, data):
         duration = data.get("duration")
         return Move(fs.drone, north, east, down, duration)
     elif command == "land":
-        fs.drone.land()
+        return Land(fs.drone)
     elif command == "takeoff":
         altitude = data.get("altitude")
         return Takeoff(fs.drone, altitude)
     elif command == "heal":
         return Heal(fs.drone)
+    elif command == "hover":
+        duration = data.get("duration")
+        return Hover(fs.drone, duration)

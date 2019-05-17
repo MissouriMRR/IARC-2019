@@ -11,11 +11,11 @@ from utils.modes import Modes
 
 #from flight import Modes
 
-DISTANCE_THRESHOLD = 100  # in cm
+DISTANCE_THRESHOLD = 150  # in cm
 DEVICE = '/dev/ttyUSB0'  # linux style
 #DEVICE = 'COM5' # windows style
-MESSAGE_RESEND_RATE = 30.0  # resend movement instruction at this HZ
-REACT_DURATION = 1.5  # go in opposite direction for this many seconds
+MESSAGE_RESEND_RATE = 15.0  # resend movement instruction at this HZ
+REACT_DURATION = 3  # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
 SIGNAL_THRESHOLD = 100
 SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
@@ -39,29 +39,6 @@ def anglify(sector):
 
 # These should all be unit vectors in the appropriate opposite direction
 REACT_DIRECTION = {x: anglify(x) for x in Sectors}
-"""
-react_direction = {
-    Sectors.ONE: anglify(Sectors.ONE),
-    Sectors.TWO: anglify(Sectors.TWO),
-    Sectors.THREE: anglify(Sectors.THREE),
-    Sectors.FOUR: anglify(Sectors.FOUR),
-    Sectors.FIVE: anglify(Sectors.FIVE),
-    Sectors.SIX: anglify(Sectors.SIX),
-    Sectors.SEVEN: anglify(Sectors.SEVEN),
-    Sectors.EIGHT: anglify(Sectors.EIGHT)
-}
-
-react_direction = {
-    Sectors.ONE: (-sin(5 * pi / 8), -cos(5 * pi / 8), 0),
-    Sectors.TWO: (-sin(7 * pi / 8), -cos(7 * pi / 8), 0),
-    Sectors.THREE: (-sin(9 * pi / 8), -cos(9 * pi / 8), 0),
-    Sectors.FOUR: (-sin(11 * pi / 8), -cos(11 * pi / 8), 0),
-    Sectors.FIVE: (-sin(13 * pi / 8), -cos(13 * pi / 8), 0),
-    Sectors.SIX: (-sin(15 * pi / 8), -cos(15 * pi / 8), 0),
-    Sectors.SEVEN: (-sin(17 * pi / 8), -cos(17 * pi / 8), 0),
-    Sectors.EIGHT: (-sin(19 * pi / 8), -cos(19 * pi / 8), 0)
-}
-"""
 
 
 class CollisionAvoidance(threading.Thread):
@@ -97,21 +74,27 @@ class CollisionAvoidance(threading.Thread):
             direction = REACT_DIRECTION[self.sector]
             n, e, d = direction
             print(n, e, d)
-            self.fs.net_client.send_teamwork({
-                "command": "move",
-                "north": n,
-                "east": e,
-                "down": d,
-                "duration": REACT_DURATION
-            })
+            if self.fs.net_client:
+                print("Moving swarm north: {} east: {} down: {}".format(
+                    n, e, d))
+                self.fs.net_client.send_teamwork({
+                    "command": "move",
+                    "north": n,
+                    "east": e,
+                    "down": d,
+                    "duration": REACT_DURATION
+                })
             # move in opposite direction
-            drone.send_rel_pos(n, e, d)
+            # actual drone.send_rel_pos(n, e, d)
+            drone.send_rel_pos(
+                n, e, -0.15
+            )  # Testing with a slight move up to prevent loss of altitude
             start = timer()
             while timer() - start < REACT_DURATION:
                 time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
             # stabilize movement with a short hover
-            HOVER_DURATION = 0.7
+            HOVER_DURATION = 1
             start = timer()
             while timer() - start < HOVER_DURATION:
                 drone.send_velocity()
