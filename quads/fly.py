@@ -76,7 +76,7 @@ class FlightSession:
         input("Press Enter to continue...")
 
         try:
-            routine = self.routine()
+            routine = self.routine(self)
             routine.start()
             while True:
                 # If finished with current command, set it to none
