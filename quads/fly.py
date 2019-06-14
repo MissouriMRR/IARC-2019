@@ -14,7 +14,7 @@ import coloredlogs
 import dronekit
 from pymavlink import mavutil
 from routines import ROUTINES, NetTesting
-from utils import (Drone, Heal, InputThread, Modes, Move,
+from utils import (SafetyThread, Drone, Heal, InputThread, Modes, Move,
                    NetClient, Takeoff, parse_command)
 
 LOG_LEVEL = logging.INFO
@@ -61,6 +61,9 @@ class FlightSession:
         if net:
             self.net_client = NetClient(
                 host, port, client_name=name, flight_session=self)
+
+        self.safety_thread = SafetyThread(flight_session=self)
+        self.safety_thread.start()
 
     def loop(self):
         """

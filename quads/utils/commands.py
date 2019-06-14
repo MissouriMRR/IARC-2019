@@ -10,6 +10,7 @@ from timeit import default_timer as timer
 import coloredlogs
 import dronekit
 from utils.laser.laser import Laser
+from utils.safety import SafetyThread, DroneState
 
 VELOCITY = 0.5  # drone will move at this rate in m/s
 TAKEOFF_ALT = 1  # drone will take off to this altitude (m)
@@ -155,6 +156,7 @@ class Takeoff(Command):
 
         self.drone.doing_command = True
 
+        SafetyThread.State = DroneState.TAKING_OFF
         self.logger.info("Drone {}: starting takeoff".format(self.drone.id))
 
         self.drone.arm()
@@ -179,6 +181,7 @@ class Takeoff(Command):
             self.drone.send_rel_pos(0, 0, 0)  # Hover
             time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
+        SafetyThread.State = DroneState.FLYING
         self.logger.info("Drone {}: finished takeoff".format(self.drone.id))
 
         self.drone.doing_command = False
@@ -282,6 +285,7 @@ class Land(Command):
     def run(self):
         self.drone.doing_command = True
 
+        SafetyThread.State = DroneState.LANDED
         self.drone.land()
 
         self.drone.doing_command = False

@@ -43,7 +43,7 @@ REACT_DIRECTION = {x: anglify(x) for x in Sectors}
 
 class CollisionAvoidance(threading.Thread):
     """
-    Responsible for taking contorl of the drone when an obstacle is
+    Responsible for taking control of the drone when an obstacle is
     encountered. It will move the drone a short distance in the opposing
     direciton of the obstacle.
     """
