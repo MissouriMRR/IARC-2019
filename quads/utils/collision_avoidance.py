@@ -20,6 +20,11 @@ LOG_LEVEL = logging.INFO
 SIGNAL_THRESHOLD = 100
 SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
 
+# Global variables for keeping track of the last collision
+# avoidance reaction
+last_sector = None
+last_start_time = None
+
 
 class Sectors(Enum):
     ONE = 1
@@ -142,6 +147,10 @@ class CollisionAvoidance(threading.Thread):
                                 count - 1
                         ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
                             self.log_collision(sector, sample)
+                            # Keep track of this reaction for making future decisions
+                            last_sector = sector
+                            last_start_time = timer()
+                            # Do the reaction
                             self.react(sector)
                             break
                         count += 1

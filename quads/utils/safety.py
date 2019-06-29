@@ -60,16 +60,19 @@ class SafetyThread(threading.Thread):
             unsafe = False
             if state == DroneState.TAKING_OFF:
                 # TODO: monitor for unsafe takeoff conditions
-                print("Safety: take off state (for demo purposes - take this out later)")
+                #print("Safety: take off state (for demo purposes - take this out later)")
+                pass
             elif state == DroneState.FLYING:
                 # TODO: monitor for unsafe flying conditions
-                print("Safety: flying state (for demo purposes - take this out later)")
+                #print("Safety: flying state (for demo purposes - take this out later)")
+                pass
                 if drone.airspeed > 1.5:
                     unsafe = True
                 if drone.rangefinder.distance > 2:
                     unsafe = True
             elif state == DroneState.LANDED:
-                print("Safety: landed state (for demo purposes - take this out later)")
+                #print("Safety: landed state (for demo purposes - take this out later)")
+                pass
 
             if unsafe:
                 self.logger.critical("Unsafe condition detected - landing!")
