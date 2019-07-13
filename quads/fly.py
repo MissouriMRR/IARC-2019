@@ -7,6 +7,7 @@ drone is given.
 import argparse
 import json
 import logging
+import os
 import threading
 import time
 
@@ -19,10 +20,12 @@ from utils import (CollisionAvoidance, Drone, Heal, InputThread, Modes, Move,
 
 LOG_LEVEL = logging.INFO
 DEFAULT_PORT = 10000
+DEVICE_PATH = '/dev/serial/by-id/'
 
+# Connection string for simulator
 SIM_CONNECT = '127.0.0.1:14552'
-REAL_CONNECT = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
-REAL_CONNECT = '/dev/serial/by-id/usb-ArduPilot_fmuv2_270025000D51373332383537-if00'
+# Gets the device path for real pixhawk
+REAL_CONNECT = DEVICE_PATH + os.listdir(DEVICE_PATH)[0]
 
 
 class FlightSession:
