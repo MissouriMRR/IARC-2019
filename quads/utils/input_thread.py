@@ -22,6 +22,11 @@ class InputThread(threading.Thread):
             c = input().split()
             if self.can_add_command():
                 if len(c) == 1:
+                    if c[0] == 'a':
+                        self.logger.info("Adjusting altitude.")
+                        print(drone.altitude_error)
+                        self.fs.next_command = Move(drone,0,0,drone.altitude_error,1)
+                        #short altitude adjustment move 
                     if c[0] == 't':
                         self.logger.info("Next command set to takeoff.")
                         self.fs.next_command = Takeoff(drone, 1)  # takeoff 1 m
@@ -55,6 +60,7 @@ class InputThread(threading.Thread):
                             float(c[3]))  # duration
                 else:
                     self.logger.info("Invalid option.")
+            
             else:
                 self.logger.info("Drone already has next command.")
             time.sleep(0.1)

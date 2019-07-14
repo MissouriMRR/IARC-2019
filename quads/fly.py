@@ -21,7 +21,7 @@ LOG_LEVEL = logging.INFO
 SIMULATION = False
 DEFAULT_PORT = 10000
 
-SIM_CONNECT = '127.0.0.1:1234'
+SIM_CONNECT = '127.0.0.1:14552'
 REAL_CONNECT = '/dev/serial/by-id/usb-3D_Robotics_PX4_FMU_v2.x_0-if00'
 REAL_CONNECT = '/dev/serial/by-id/usb-ArduPilot_fmuv2_270025000D51373332383537-if00'
 
@@ -72,7 +72,6 @@ class FlightSession:
         check for the arrival of network messages from the tablet.
         """
 
-        self.do_altitude_check()
 
         # Make sure drone is initialized before attempting commands
         if not isinstance(self.drone, dronekit.Vehicle):
@@ -146,8 +145,6 @@ class FlightSession:
                 self.debug_loop.stop_event.set()
                 self.debug_loop.join()
 
-def do_altitude_check(self):
-    Drone._set_altitude(self._drone)  #sets current_altitude
 
 
 def main():

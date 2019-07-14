@@ -52,7 +52,8 @@ class Drone(Vehicle):
     See http://python.dronekit.io/guide/vehicle_state_and_parameters.html for
     all of the attributes we get by subclassing dronekit.Vehicle.
     """
-    current_altitude = 0 #current altitude
+    previous_altitude = 0 #ending altitude checked from previous move
+    altitude_error = 0 #amount of error in altitude calculated by check and used for correction
 
     def __init__(self, *args):
         super(Drone, self).__init__(*args)
@@ -211,14 +212,22 @@ class Drone(Vehicle):
             relative, # param 4, relative offset 1, absolute angle 0
             0, 0, 0) # param 5 ~ 7 not used
 
-    def _set_altitude(self): #checks and modifies current altitude
+    def _check_altitude(self): #checks and modifies current altitude after any task
+        end_altitude = 0 #NEED TO CHECK FOR NOT CHANGING ERROR WHEN PURPOSELY MOVED VERTICALLY
+        Drone.altitude_error = 0 #may be removed
         if self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < 25:
-            Drone.current_altitude = self.rangefinder.distance
-            return 
+            end_altitude = self.rangefinder.distance 
+            Drone.altitude_error = (Drone.previous_altitude - end_altitude)
+            Drone.previous_altitude = (end_altitude)
+            return
         elif self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) > .25:
-            Drone.current_altitude = self.location.global_frame.alt
-            return 
+            end_altitude = self.location.global_frame.alt
+            Drone.altitude_error = (Drone.previous_altitude - end_altitude)
+            Drone.previous_altitude = (end_altitude)
+            return
         elif self.rangefinder.distance < 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < .25: 
-            Drone.current_altitude = self.rangefinder.distance
+            end_altitude = self.rangefinder.distance
+            Drone.altitude_error = (Drone.previous_altitude - end_altitude)
+            Drone.previous_altitude = (end_altitude)
             return
         else: return
