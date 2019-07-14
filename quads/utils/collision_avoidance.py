@@ -13,12 +13,17 @@ from utils.modes import Modes
 
 DISTANCE_THRESHOLD = 150  # in cm
 DEVICE = '/dev/ttyUSB0'  # linux style
-#DEVICE = 'COM5' # windows style
+# DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 15.0  # resend movement instruction at this HZ
 REACT_DURATION = 3  # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
 SIGNAL_THRESHOLD = 100
 SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
+
+# Global variables for keeping track of the last collision
+# avoidance reaction
+last_sector = None
+last_start_time = None
 
 
 class Sectors(Enum):
@@ -65,6 +70,7 @@ class CollisionAvoidance(threading.Thread):
             super(CollisionAvoidance.Reaction, self).__init__()
             self.sector = sector
             self.fs = flight_session
+            self.previous_scan = []
 
         def run(self):
             """
@@ -116,7 +122,7 @@ class CollisionAvoidance(threading.Thread):
             sweep.start_scanning()
             self.logger.info("Lidar has begun giving samples")
             for scan in sweep.get_scans():
-
+                self.previous_scan = scan
                 # check if flight controller has said to stop
                 if self.stop_event.is_set():
                     self.logger.info("trying to stop scanning...")
@@ -142,6 +148,10 @@ class CollisionAvoidance(threading.Thread):
                                 count - 1
                         ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
                             self.log_collision(sector, sample)
+                            # Keep track of this reaction for making future decisions
+                            last_sector = sector
+                            last_start_time = timer()
+                            # Do the reaction
                             self.react(sector)
                             break
                         count += 1
@@ -184,3 +194,9 @@ class CollisionAvoidance(threading.Thread):
             self.flight_session.current_command.join()
 
         self.Reaction(sector, self.flight_session).start()
+
+    def get_previous_samples(self):
+        """
+        Returns the most recently observed distance observations.
+        """
+        return self.previous_scan.samples
