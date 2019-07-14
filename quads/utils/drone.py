@@ -213,9 +213,9 @@ class Drone(Vehicle):
             0, 0, 0) # param 5 ~ 7 not used
 
     def _check_altitude(self): #checks and modifies current altitude after any task
-        end_altitude = 0 #NEED TO CHECK FOR NOT CHANGING ERROR WHEN PURPOSELY MOVED VERTICALLY
+        end_altitude = 0 #altitude at end of move calculated by function
         Drone.altitude_error = 0 #may be removed
-        if self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < 25:
+        if self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < .25:
             end_altitude = self.rangefinder.distance 
             Drone.altitude_error = (Drone.previous_altitude - end_altitude)
             Drone.previous_altitude = (end_altitude)
