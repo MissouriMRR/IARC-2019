@@ -72,6 +72,8 @@ class FlightSession:
         check for the arrival of network messages from the tablet.
         """
 
+        self.do_altitude_check()
+
         # Make sure drone is initialized before attempting commands
         if not isinstance(self.drone, dronekit.Vehicle):
             self.logger.info(
@@ -144,8 +146,8 @@ class FlightSession:
                 self.debug_loop.stop_event.set()
                 self.debug_loop.join()
 
-    # def do_safety_checks(self):
-    #     Drone._set_altitude(self._drone)  #sets current_altitude
+def do_altitude_check(self):
+    Drone._set_altitude(self._drone)  #sets current_altitude
 
 
 def main():
