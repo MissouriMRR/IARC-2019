@@ -65,6 +65,9 @@ class Move(Command):
         No matter what (north, east, down) is given, drone will travel in
         that unit direction for the specified number of seconds.
         """
+        
+        down = -(down + drone._altitude_check(down))
+
         super(Move, self).__init__(drone)
         # The following four lines scale the movement vector so that it
         # retains its direction, but has a magnitude of the default
@@ -142,6 +145,7 @@ class Takeoff(Command):
         alt_target: (float) how high to take off to (meters)
         seconds: (float) number of seconds to fly in this direction
         """
+        alt_target = (alt_target + drone._altitude_check(alt_target))
         super(Takeoff, self).__init__(drone)
         self.alt_target = alt_target
 
@@ -201,6 +205,7 @@ class Heal(Command):
         range: how many degrees of heading to yaw back and forth
         duration: (float) number of seconds to yaw for
         """
+        temp = drone._altitude_check(0)
         super(Heal, self).__init__(drone)
         self.duration = duration
         self.range = range

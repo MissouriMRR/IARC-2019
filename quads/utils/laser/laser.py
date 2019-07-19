@@ -1,7 +1,7 @@
 """
 Contains the control object for the laser mounted on the drones
 """
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 class Laser:
     """

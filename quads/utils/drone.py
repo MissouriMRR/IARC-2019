@@ -12,6 +12,7 @@ import time
 ARM_RETRY_DELAY = 0.1
 GUIDED = "GUIDED"
 LAND = "LAND"
+RF_BR_ERROR = .2 #rangefinder and barometer error allowdrone.RF_BR_ERROR in meters
 
 def to_quaternion(roll=0.0, pitch=0.0, yaw=0.0):
     """Convert degrees to quaternions.
@@ -52,8 +53,9 @@ class Drone(Vehicle):
     See http://python.dronekit.io/guide/vehicle_state_and_parameters.html for
     all of the attributes we get by subclassing dronekit.Vehicle.
     """
-    previous_altitude = 0 #ending altitude checked from previous move
-    altitude_error = 0 #amount of error in altitude calculated by check and used for correction
+    # variables for _altitude_check function
+    previous_altitude = 0 #altitude from previous check
+    given_altitude = 0 #change in altitude given in any task
 
     def __init__(self, *args):
         super(Drone, self).__init__(*args)
@@ -212,22 +214,22 @@ class Drone(Vehicle):
             relative, # param 4, relative offset 1, absolute angle 0
             0, 0, 0) # param 5 ~ 7 not used
 
-    def _check_altitude(self): #checks and modifies current altitude after any task
-        end_altitude = 0 #altitude at end of move calculated by function
-        Drone.altitude_error = 0 #may be removed
-        if self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < .25:
-            end_altitude = self.rangefinder.distance 
-            Drone.altitude_error = (Drone.previous_altitude - end_altitude)
-            Drone.previous_altitude = (end_altitude)
-            return
-        elif self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) > .25:
-            end_altitude = self.location.global_frame.alt
-            Drone.altitude_error = (Drone.previous_altitude - end_altitude)
-            Drone.previous_altitude = (end_altitude)
-            return
-        elif self.rangefinder.distance < 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) < .25: 
-            end_altitude = self.rangefinder.distance
-            Drone.altitude_error = (Drone.previous_altitude - end_altitude)
-            Drone.previous_altitude = (end_altitude)
-            return
-        else: return
+    def _altitude_check(self, given): #checks and modifies given altitude before a task
+        current_altitude = 0 #current altitude calculated
+        altitude_error = 0 #error calculated and returned
+        if abs(self.rangefinder.distance - self.location.global_frame.alt) < RF_BR_ERROR:
+            current_altitude = self.rangefinder.distance 
+        #both are working accurately so range finder is used
+        
+        elif self.rangefinder.distance >= 1 and abs(self.rangefinder.distance - self.location.global_frame.alt) > RF_BR_ERROR:
+            current_altitude = self.location.global_frame.alt 
+        #readings are different and over a meter, so drone is likely over an object. using barometer
+        
+        else: current_altitude = (Drone.previous_altitude + Drone.given_altitude)
+        #altitude cannot be accurately calculated so uses previous altitude for safety
+        
+        altitude_error = (Drone.previous_altitude + Drone.given_altitude - current_altitude)
+        #assigns new values for future use
+        Drone.previous_altitude = (Drone.given_altitude + Drone.previous_altitude)
+        Drone.given_altitude = given 
+        return altitude_error
