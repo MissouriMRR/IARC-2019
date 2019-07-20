@@ -4,46 +4,90 @@ import time
 from enum import Enum
 from math import cos, pi, sin
 from timeit import default_timer as timer
+from math import cos, pi, sin, asin, acos, degrees, radians
+from numpy import array, append, dot
 
 import coloredlogs
 from sweeppy import Sweep
 from utils.modes import Modes
 
-#from flight import Modes
+from flight import Modes
 
-DISTANCE_THRESHOLD = 150  # in cm
+# --OLD CONSTANTS--
+# DISTANCE_THRESHOLD = 150  # in cm
+# DEVICE = '/dev/ttyUSB0'  # linux style
+# # DEVICE = 'COM5' # windows style
+# MESSAGE_RESEND_RATE = 15.0  # resend movement instruction at this HZ
+# REACT_DURATION = 3  # go in opposite direction for this many seconds
+# LOG_LEVEL = logging.INFO
+# SIGNAL_THRESHOLD = 100
+# SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
+
+# Parameters to edit
+AVOID_SPEED = 1  # m/s
+SAFE_DISTANCE = 100  # cm
+SECTOR_ANGLE = 10  # degrees
+Z_SPEED = -.15  # meters per second, This is used to offset falling caused by avoiding
+DRONE_RADIUS = 35  # cm
 DEVICE = '/dev/ttyUSB0'  # linux style
 # DEVICE = 'COM5' # windows style
 MESSAGE_RESEND_RATE = 15.0  # resend movement instruction at this HZ
-REACT_DURATION = 3  # go in opposite direction for this many seconds
+REACT_DURATION = .3  # go in opposite direction for this many seconds
 LOG_LEVEL = logging.INFO
-SIGNAL_THRESHOLD = 100
-SECTOR_ANGLE = 360 / 8  # how many degrees each sector covers
+SIGNAL_THRESHOLD = 90
+MOTOR_SPEED = 6 # rotations/sec
+SAMPLE_RATE = 100 # samples/rotation
+
+# Parameters defined by the previous parameters
+DISTANCE_THRESHOLD = DRONE_RADIUS + SAFE_DISTANCE  # in cm
+NUMBER_OF_SECTORS = 360/SECTOR_ANGLE
 
 # Global variables for keeping track of the last collision
 # avoidance reaction
 last_sector = None
 last_start_time = None
 
-
-class Sectors(Enum):
-    ONE = 1
-    TWO = 2
-    THREE = 3
-    FOUR = 4
-    FIVE = 5
-    SIX = 6
-    SEVEN = 7
-    EIGHT = 8
-
-
-def anglify(sector):
-    offset = 5 + (sector.value - 1) * 2
-    return (-sin(offset * pi / 8), -cos(offset * pi / 8), 0)
+# -- OLD --
+# class Sectors(Enum):
+#     ONE = 1
+#     TWO = 2
+#     THREE = 3
+#     FOUR = 4
+#     FIVE = 5
+#     SIX = 6
+#     SEVEN = 7
+#     EIGHT = 8
 
 
-# These should all be unit vectors in the appropriate opposite direction
-REACT_DIRECTION = {x: anglify(x) for x in Sectors}
+# def anglify(sector):
+#     offset = 5 + (sector.value - 1) * 2
+#     return (-sin(offset * pi / 8), -cos(offset * pi / 8), 0)
+
+def convert_angle_to_cartessian(angle):
+    array_type = type(array([]))
+    angle_temp = []
+    if (type(angle) != list) and (type(angle) != type(array_type)):
+        angle_temp.append(angle)
+        print('The given angle is type = ' + str(type(angle)))
+        angle = []
+        angle.append(angle_temp)
+    if len(angle) == 1:
+        angle = list(angle)
+        angle.append(angle[0])
+    unit_vector = ([])
+    for a in array(angle):
+        unit_vector.append([cos(radians(a)), sin(radians(a))])
+    unit_vector = array(unit_vector)
+    return unit_vector
+
+
+def convert_sector_to_cartessian(sector):
+    angle = sector*SECTOR_ANGLE
+    return convert_angle_to_cartessian(angle)
+
+# -- OLD --
+# # These should all be unit vectors in the appropriate opposite direction
+# REACT_DIRECTION = {x: anglify(x) for x in Sectors}
 
 
 class CollisionAvoidance(threading.Thread):
@@ -77,8 +121,12 @@ class CollisionAvoidance(threading.Thread):
             Moves the drone in the opposite direction of the obstacle.
             """
             drone = self.fs.drone
-            direction = REACT_DIRECTION[self.sector]
-            n, e, d = direction
+
+            avoid_unit_vector_temp = convert_sector_to_cartessian((self.sector))
+            avoid_unit_vector = avoid_unit_vector_temp[0]
+            n, e, d = (
+                AVOID_SPEED*avoid_unit_vector[0], AVOID_SPEED*avoid_unit_vector[1], Z_SPEED)
+
             print(n, e, d)
             if self.fs.net_client:
                 print("Moving swarm north: {} east: {} down: {}".format(
@@ -100,11 +148,12 @@ class CollisionAvoidance(threading.Thread):
                 time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
             # stabilize movement with a short hover
-            HOVER_DURATION = 1
-            start = timer()
-            while timer() - start < HOVER_DURATION:
-                drone.send_velocity()
-                time.sleep(1.0 / MESSAGE_RESEND_RATE)
+            # -- OLD --
+            # HOVER_DURATION = 1
+            # start = timer()
+            # while timer() - start < HOVER_DURATION:
+            #     drone.send_velocity()
+            #     time.sleep(1.0 / MESSAGE_RESEND_RATE)
 
             CollisionAvoidance.DoingReaction = False
             self.fs.mode = Modes.NETWORK_CONTROLLED
@@ -115,10 +164,13 @@ class CollisionAvoidance(threading.Thread):
         If an obstacle is detected, the drone will try to move in the
         opposite direction for a short duration.
         """
+        global last_sector
+        global last_start_time
+
         self.logger.info("Trying to start lidar sample collection...")
         with Sweep(DEVICE) as sweep:
-            sweep.set_motor_speed(6)
-            sweep.set_sample_rate(100)
+            sweep.set_motor_speed(MOTOR_SPEED)
+            sweep.set_sample_rate(SAMPLE_RATE)
             sweep.start_scanning()
             self.logger.info("Lidar has begun giving samples")
             for scan in sweep.get_scans():
@@ -133,28 +185,78 @@ class CollisionAvoidance(threading.Thread):
                     scan.samples,
                     key=lambda s: s.signal_strength,
                     reverse=True)
+
+                acceptable_samples = []
+
+                # Gather list of acceptable samples (meeting criteria of distance
+                # and signal strength)
                 for sample in sorted_samples:
                     # check that the no reaction is currently happening and
                     # that the sample is worthy of being acted upon
                     if (CollisionAvoidance.DoingReaction
                             or not self.meets_requirements(sample)):
                         continue
-                    s_angle = int(sample.angle / 1000)
 
-                    count = 1
-                    print(s_angle)
-                    for sector in Sectors:
-                        if (
-                                count - 1
-                        ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
-                            self.log_collision(sector, sample)
-                            # Keep track of this reaction for making future decisions
-                            last_sector = sector
-                            last_start_time = timer()
-                            # Do the reaction
-                            self.react(sector)
-                            break
-                        count += 1
+                    acceptable_samples.append(int(sample.angle / 1000))
+
+                # Sorting acceptable samples based on their angle
+                acceptable_samples = sorted(
+                    acceptable_samples,
+                    key=lambda sample: (sample.angle, sample.signal_strength)
+                )
+
+                # Get just sectors (round up to nearest integer)
+                acceptable_sectors = [
+                    int((sample.angle / SECTOR_ANGLE) + 1) for sample in acceptable_samples]
+                # remove duplicate sectors
+                acceptable_sectors = (list(dict.fromkeys(acceptable_sectors)))
+
+                # obstacle_unit_vectors = convert_sector_to_cartessian(array(acceptable_sectors))
+
+                sector_difference = []
+                count = 1
+                for sectors in acceptable_sectors:
+                    if (count) == len(acceptable_sectors):
+                        sector_difference.append(
+                            acceptable_sectors[0]-sectors+NUMBER_OF_SECTORS)
+                    else:
+                        sector_difference.append(
+                            acceptable_sectors[count]-sectors)
+                    count = count + 1
+
+                avoid_angle = SECTOR_ANGLE * \
+                    (max(sector_difference)/2 +
+                     acceptable_sectors[sector_difference.index(max(sector_difference))])
+
+                if avoid_angle > 360:
+                    avoid_angle = avoid_angle - 360
+
+                avoid_sector = int(avoid_angle/SECTOR_ANGLE)
+
+                self.log_collision(avoid_sector, sample)
+
+                # Keep track of this reaction for making future decisions
+                last_sector = avoid_sector
+                last_start_time = timer()
+
+                # Do the reaction
+                self.react(avoid_sector)
+
+                # -- OLD --
+                # count = 1
+                # print(s_angle)
+                # for sector in Sectors:
+                #     if (
+                #             count - 1
+                #     ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
+                #         self.log_collision(sector, sample)
+                #         # Keep track of this reaction for making future decisions
+                #         last_sector = sector
+                #         last_start_time = timer()
+                #         # Do the reaction
+                #         self.react(sector)
+                #         break
+                #     count += 1
 
     def log_collision(self, sector, sample):
         msg = ("Collision detected - {} (distance - {}, confidence - {})"
