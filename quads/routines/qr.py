@@ -3,9 +3,10 @@ import threading
 from utils import parse_command
 
 #takes last 4 samples to insure it gets a sample for each wall
-NUM_SCAN_SAMPLES = 4 '''Not sure what exactly is in a sample
-                        or how samples are recorded and returned. 
-                        Could use clarification -Ben'''
+NUM_SCAN_SAMPLES = 4 
+'''Not sure what exactly is in a sample
+or how samples are recorded and returned. 
+ould use clarification -Ben'''
 #confidence needed to confirm a nearby wall
 CONFIDENCE_REQ = 110
 # HAS to be set BEFORE running.
@@ -42,7 +43,7 @@ class QrRoutine(threading.Thread):
                      })
         return 
 
-    def get_distance(self)
+    def get_distance(self):
         distance_move = [0,0] #returned direction of travel and distance
         nearest_wall = 0 #nearest wall
         distances = [0,0,0,0] #distances of all walls
