@@ -6,7 +6,7 @@ layout (r32ui) uniform uimageBuffer image_buffer;
 out vec4 fragment_color;
 
 void main(void){
-    int loc = int((gl_FragCoord.y - .5) * 1024 + gl_FragCoord.x);
+    int loc = int((gl_FragCoord.y - .5) * 1024 * 1 + gl_FragCoord.x);
     imageAtomicAdd(image_buffer, loc, 1);
 
     // DEBUG
