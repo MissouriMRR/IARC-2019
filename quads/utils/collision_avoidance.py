@@ -11,7 +11,6 @@ import coloredlogs
 from sweeppy import Sweep
 from utils.modes import Modes
 
-from flight import Modes
 
 # --OLD CONSTANTS--
 # DISTANCE_THRESHOLD = 150  # in cm
@@ -125,9 +124,9 @@ class CollisionAvoidance(threading.Thread):
             avoid_unit_vector_temp = convert_sector_to_cartessian((self.sector))
             avoid_unit_vector = avoid_unit_vector_temp[0]
             n, e, d = (
-                AVOID_SPEED*avoid_unit_vector[0], AVOID_SPEED*avoid_unit_vector[1], Z_SPEED)
+                    -AVOID_SPEED*avoid_unit_vector[1],-AVOID_SPEED*avoid_unit_vector[0], Z_SPEED)
 
-            print(n, e, d)
+            print("OO NED:", n, e, d)
             if self.fs.net_client:
                 print("Moving swarm north: {} east: {} down: {}".format(
                     n, e, d))
@@ -197,66 +196,66 @@ class CollisionAvoidance(threading.Thread):
                             or not self.meets_requirements(sample)):
                         continue
 
-                    acceptable_samples.append(int(sample.angle / 1000))
+                    acceptable_samples.append(sample)
 
-                # Sorting acceptable samples based on their angle
-                acceptable_samples = sorted(
-                    acceptable_samples,
-                    key=lambda sample: (sample.angle, sample.signal_strength)
-                )
+                if acceptable_samples:
+                    # Sorting acceptable samples based on their angle
+                    acceptable_samples = sorted(
+                        acceptable_samples,
+                        key=lambda sample: (sample.angle, sample.signal_strength)
+                    )
 
-                # Get just sectors (round up to nearest integer)
-                acceptable_sectors = [
-                    int((sample.angle / SECTOR_ANGLE) + 1) for sample in acceptable_samples]
-                # remove duplicate sectors
-                acceptable_sectors = (list(dict.fromkeys(acceptable_sectors)))
+                    # Get just sectors (round up to nearest integer)
+                    acceptable_sectors = [
+                        int((sample.angle / (SECTOR_ANGLE * 1000)) + 1) for sample in acceptable_samples]
+                    # remove duplicate sectors
+                    acceptable_sectors = sorted(list(dict.fromkeys(acceptable_sectors)))
 
-                # obstacle_unit_vectors = convert_sector_to_cartessian(array(acceptable_sectors))
+                    # obstacle_unit_vectors = convert_sector_to_cartessian(array(acceptable_sectors))
 
-                sector_difference = []
-                count = 1
-                for sectors in acceptable_sectors:
-                    if (count) == len(acceptable_sectors):
-                        sector_difference.append(
-                            acceptable_sectors[0]-sectors+NUMBER_OF_SECTORS)
-                    else:
-                        sector_difference.append(
-                            acceptable_sectors[count]-sectors)
-                    count = count + 1
+                    sector_difference = []
+                    count = 1
+                    print("SECTORS W/ OBSTACLES: ", acceptable_sectors)
+                    for sectors in acceptable_sectors:
+                        if (count) == len(acceptable_sectors):
+                            sector_difference.append(
+                                acceptable_sectors[0]-sectors+NUMBER_OF_SECTORS)
+                        else:
+                            sector_difference.append(
+                                acceptable_sectors[count]-sectors)
+                        count = count + 1
 
-                avoid_angle = SECTOR_ANGLE * \
-                    (max(sector_difference)/2 +
-                     acceptable_sectors[sector_difference.index(max(sector_difference))])
+                    avoid_angle = SECTOR_ANGLE * (max(sector_difference)/3 + acceptable_sectors[sector_difference.index(max(sector_difference))])
 
-                if avoid_angle > 360:
-                    avoid_angle = avoid_angle - 360
+                    if avoid_angle > 360:
+                        avoid_angle = avoid_angle - 360
 
-                avoid_sector = int(avoid_angle/SECTOR_ANGLE)
+                    avoid_sector = int(avoid_angle/SECTOR_ANGLE)
 
-                self.log_collision(avoid_sector, sample)
+                    self.log_collision(avoid_sector, sample)
 
-                # Keep track of this reaction for making future decisions
-                last_sector = avoid_sector
-                last_start_time = timer()
+                    # Keep track of this reaction for making future decisions
+                    last_sector = avoid_sector
+                    last_start_time = timer()
 
-                # Do the reaction
-                self.react(avoid_sector)
+                    # Do the reaction
+                    self.react(avoid_sector)
 
-                # -- OLD --
-                # count = 1
-                # print(s_angle)
-                # for sector in Sectors:
-                #     if (
-                #             count - 1
-                #     ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
-                #         self.log_collision(sector, sample)
-                #         # Keep track of this reaction for making future decisions
-                #         last_sector = sector
-                #         last_start_time = timer()
-                #         # Do the reaction
-                #         self.react(sector)
-                #         break
-                #     count += 1
+                    # -- OLD --
+                    # count = 1
+                    # print(s_angle)
+                    # for sector in Sectors:
+                    #     if (
+                    #             count - 1
+                    #     ) * SECTOR_ANGLE <= s_angle and s_angle <= count * SECTOR_ANGLE:
+                    #         self.log_collision(sector, sample)
+                    #         # Keep track of this reaction for making future decisions
+                    #         last_sector = sector
+                    #         last_start_time = timer()
+                    #         # Do the reaction
+                    #         self.react(sector)
+                    #         break
+                    #     count += 1
 
     def log_collision(self, sector, sample):
         msg = ("Collision detected - {} (distance - {}, confidence - {})"
